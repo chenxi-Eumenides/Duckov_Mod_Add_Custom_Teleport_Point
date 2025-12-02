@@ -1,6 +1,6 @@
 # 自定义传送点 Mod
 
-**警告** 目前模组未完成，本人能力有限，进展缓慢，欢迎有大佬能完善，或给我提供一些帮助。
+***警告*** 目前模组未完成，本人能力有限，进展缓慢，欢迎有大佬能完善，或给我提供一些帮助。
 
 ## 项目概述
 
@@ -16,9 +16,11 @@
 - *可配置自动生成返回传送点
 
 未来计划
+- 支持生成一次性传送点
 - 支持json配置
 - 支持其他模组调用
 - 支持modsetting模组进行配置
+  - 添加几个内置位置，通过快捷键快捷创造一个当前位置到内置位置的传送点
 
 ## 项目结构
 
@@ -52,8 +54,6 @@ Add_Custom_TelePort_Point/
 
 本项目在开发过程中参考和使用了以下开源项目，特此致谢：
 
-### 1. [duckovAPI](https://github.com/xiaomao-miao/duckovAPI)
-
-### 2. [Duckov_Modding_Template](https://github.com/BAKAOLC/Duckov_Modding_Template)
-
-### 3. [duckovsrc](https://github.com/obscurefreeman/duckovsrc)
+1. [duckovAPI](https://github.com/xiaomao-miao/duckovAPI)
+2. [Duckov_Modding_Template](https://github.com/BAKAOLC/Duckov_Modding_Template)
+3. [duckovsrc](https://github.com/obscurefreeman/duckovsrc)
