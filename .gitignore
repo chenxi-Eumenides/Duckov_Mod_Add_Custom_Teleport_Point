@@ -364,3 +364,5 @@ riderModule.iml
 *.DotSettings.user
 
 # User Custom Define
+duckov_src/
+modding_Template/
