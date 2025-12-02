@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <AssemblyName>Add_Custom_Teleport_Point</AssemblyName>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <PlatformTarget>x64</PlatformTarget>
+        <DuckovPath>D:\Apps\Steam\steamapps\common\Escape from Duckov</DuckovPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\TeamSoda.*">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\SodaLocalization.dll">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\ItemStatsSystem.dll">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\Unity*">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\UniTask.dll">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\Newtonsoft.Json.dll">
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="$(DuckovPath)\Duckov_Data\Managed\Eflatun.SceneReference.dll">
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Lib.Harmony" Version="2.4.1">
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="info.ini">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <PropertyGroup>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    </PropertyGroup>
+
+</Project>
