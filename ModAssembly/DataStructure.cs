@@ -32,9 +32,9 @@ namespace Add_Custom_Teleport_Point
         public bool saveToFile = false;
         public bool hideTips = false;
 
-        public SceneInfo(string id, Vector3 pos, string name)
+        public SceneInfo(string sceneid, Vector3 pos, string name)
         {
-            sceneID = id;
+            sceneID = sceneid;
             position = pos;
             locationName = name;
             scene = SceneInfoCollection.GetSceneInfo(sceneID);
@@ -72,12 +72,14 @@ namespace Add_Custom_Teleport_Point
         public Vector3 targetPosition;
         public string interactName = Constant.DEFAULT_INTERACT_NAME;
         public float interactTime = Constant.DEFAULT_INTERACT_TIME;
+        public bool disposable = false;
 
         public TeleportConfig(
             string sourceSceneId, Vector3 sourcePosition,
             string targetSceneId, Vector3 targetPosition,
             string interactName = Constant.DEFAULT_INTERACT_NAME,
-            float interactTime = Constant.DEFAULT_INTERACT_TIME
+            float interactTime = Constant.DEFAULT_INTERACT_TIME,
+            bool disposable = false
         )
         {
             this.sourceSceneId = sourceSceneId;
@@ -86,6 +88,7 @@ namespace Add_Custom_Teleport_Point
             this.targetPosition = targetPosition;
             this.interactName = interactName;
             this.interactTime = interactTime;
+            this.disposable = disposable;
         }
     }
 }

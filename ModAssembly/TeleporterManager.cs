@@ -99,7 +99,7 @@ namespace Add_Custom_Teleport_Point
             teleportPoint.transform.position = config.sourcePosition;
             CustomTeleporter CustomTeleporter = teleportPoint.AddComponent<CustomTeleporter>();
             CustomTeleporter.Initialize(
-                createdTeleportPoint.Count, config.interactName,
+                config.configID, config.interactName,
                 config.sourceSceneId, config.sourcePosition,
                 config.targetSceneId, config.targetPosition
             );
@@ -126,7 +126,8 @@ namespace Add_Custom_Teleport_Point
             string targetSceneId, Vector3 targetPosition,
             string interactName = Constant.DEFAULT_INTERACT_NAME,
             float interactTime = Constant.DEFAULT_INTERACT_TIME,
-            bool backTeleport = false
+            bool backTeleport = false,
+            bool disposable = false
         )
         {
             int successCount = 0;
@@ -136,8 +137,9 @@ namespace Add_Custom_Teleport_Point
                 sourcePosition: sourcePosition,
                 targetSceneId: targetSceneId,
                 targetPosition: targetPosition,
-                interactName: interactName,
-                interactTime: interactTime
+                interactName: disposable ? interactName + " (一次性)" : interactName,
+                interactTime: interactTime,
+                disposable: disposable
             );
             if (isVaildConfig(config))
             {
@@ -152,8 +154,9 @@ namespace Add_Custom_Teleport_Point
                     sourcePosition: targetPosition,
                     targetSceneId: sourceSceneId,
                     targetPosition: sourcePosition,
-                    interactName: "[返回] " + interactName,
-                    interactTime: interactTime
+                    interactName: disposable ? "[返回] " + interactName + " (一次性)" : "[返回] " + interactName,
+                    interactTime: interactTime,
+                    disposable: disposable
                 );
                 if (isVaildConfig(backConfig))
                 {

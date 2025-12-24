@@ -9,7 +9,7 @@ namespace Add_Custom_Teleport_Point
     // 自定义传送组件，挂载到实例物体gameobject上
     public class CustomTeleporter : InteractableBase
     {
-        private string id = "";
+        private int id = -1;
         private bool isInitialized = false;
         private static bool isTeleporting;
         private static float lastTeleportTime;
@@ -18,12 +18,13 @@ namespace Add_Custom_Teleport_Point
 
         private List<InteractableBase> otherInterablesInGroup = new List<InteractableBase>();
 
-        public string ID => id;
+        public int ID => id;
         public bool showMarker = true;
         public Vector3 markerOffset = Vector3.up * 1f;
         public float teleportCooldown = 1f;
         public string displayName => InteractName;
         public bool isCrossLevel => targetSceneInfo.mainSceneID != sourceSceneInfo.mainSceneID;
+        public bool Disposable = false;
 
         public static bool IsTeleporting => isTeleporting;
         public static float LastTeleportTime => lastTeleportTime;
@@ -31,15 +32,16 @@ namespace Add_Custom_Teleport_Point
         // 初始化，设置属性
         public void Initialize(int index, List<string> displayContext,
             string sourceSceneID, Vector3 sourcePosition,
-            string targetSceneID, Vector3 targetPosition)
+            string targetSceneID, Vector3 targetPosition,
+            bool disposable = false)
         {
             // 设置唯一id和名称
-            id = $"{Constant.CustomTeleporterPrefix}_{index}";
-            gameObject.name = id;
+            id = index;
+            gameObject.name = $"{Constant.CustomTeleporterPrefix}_{index}";
 
             // 设置传送点信息
-            sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"{Constant.CustomTeleporterPrefix}_source_{index}");
-            targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"{Constant.CustomTeleporterPrefix}_target_{index}");
+            sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"{Constant.CustomTeleporterPrefix}_{index}_source");
+            targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"{Constant.CustomTeleporterPrefix}_{index}_target");
 
             // 设置交互显示名称和本地化
             string UI_context = Constant.DEFAULT_INTERACT_NAME;
@@ -72,6 +74,7 @@ namespace Add_Custom_Teleport_Point
             collider.isTrigger = true;
             collider.enabled = true;
             gameObject.layer = LayerMask.NameToLayer("Interactable");
+            Disposable=disposable;
 
             // 激活
             isInitialized = true;
@@ -79,9 +82,10 @@ namespace Add_Custom_Teleport_Point
         }
         public void Initialize(int index, string displayContext,
             string sourceSceneID, Vector3 sourcePosition,
-            string targetSceneID, Vector3 targetPosition)
+            string targetSceneID, Vector3 targetPosition,
+            bool disposable = false)
         {
-            Initialize(index, new List<string> { displayContext, displayContext }, sourceSceneID, sourcePosition, targetSceneID, targetPosition);
+            Initialize(index, new List<string> { displayContext, displayContext }, sourceSceneID, sourcePosition, targetSceneID, targetPosition, disposable);
         }
 
         // 先初始化，再Awake
@@ -109,6 +113,7 @@ namespace Add_Custom_Teleport_Point
 
             isTeleporting = true;
             lastTeleportTime = Time.time;
+            if (Disposable) TeleporterManager.CancelTeleportPointConfig(ID);
 
             try
             {
