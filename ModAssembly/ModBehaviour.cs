@@ -47,7 +47,6 @@ namespace Add_Custom_Teleport_Point
         }
 
         // 在这里注册自定义的传送点配置
-        // 为了整洁，仅此
         private void registerCustomTeleportConfig()
         {
             TeleporterManager.registerTeleportPoint(
@@ -82,9 +81,9 @@ namespace Add_Custom_Teleport_Point
         // SceneLoader.onFinishedLoadingScene
         // SceneLoader.onBeforeSetSceneActive
         // SceneLoader.onAfterSceneInitialize
-        // LevelManager.OnLevelBeginInitializing
-        // LevelManager.OnLevelInitialized
-        // LevelManager.OnAfterLevelInitialized
+        //   LevelManager.OnLevelBeginInitializing
+        //   LevelManager.OnLevelInitialized
+        //   LevelManager.OnAfterLevelInitialized
         // LevelManager 如果实例化时，正在加载场景，就会注册到 SceneLoader.onAfterSceneInitialize 中
         // 如果没有加载场景，就会直接执行
         // 所以顺序通常是按照我写的顺序，如果要在其他地方实例化 LevelManager，则顺序按实际来。

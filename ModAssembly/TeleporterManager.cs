@@ -169,7 +169,6 @@ namespace Add_Custom_Teleport_Point
         {
             maxRegisteredConfig += 1;
             config.configID = maxRegisteredConfig;
-            SodaCraft.Localizations.LocalizationManager.SetOverrideText(config.interactName, config.interactName);
             registeredConfig.Add(config);
         }
 
