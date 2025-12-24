@@ -1,3 +1,11 @@
+# User Custom Define
+duckov_src/
+modding_Template/
+log/
+.zed/
+output/
+*.sln
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -363,6 +371,3 @@ riderModule.iml
 /_ReSharper.Caches/
 *.DotSettings.user
 
-# User Custom Define
-duckov_src/
-modding_Template/

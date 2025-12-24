@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using UnityEngine;
 using Duckov.Modding;
 
 namespace Add_Custom_Teleport_Point
@@ -23,19 +24,19 @@ namespace Add_Custom_Teleport_Point
 
             if (!LoadHarmony())
             {
-                ModLogger.LogError("Failed to load Harmony. Waiting for mod activation to retry.");
+                Debug.LogError($"{Constant.LogPrefix} Failed to load Harmony. Waiting for mod activation to retry.");
                 RegisterModActivatedEvents();
                 return;
             }
             HarmonyLoader.OnReadyToPatch += () =>
             {
-                ModLogger.Log("Harmony patch all");
+                Debug.Log($"{Constant.LogPrefix} Harmony patch all");
                 HarmonyLoader.PatchAll(typeof(ModBehaviour).Assembly);
                 InvokeModEntryMethod("Initialize");
             };
 
-            ModLogger.Log("Harmony Initialized Successfully");
-            ModLogger.Log("Triggering ReadyToPatch Event");
+            Debug.Log($"{Constant.LogPrefix} Harmony Initialized Successfully");
+            Debug.Log($"{Constant.LogPrefix} Triggering ReadyToPatch Event");
             ReadyToPatch();
         }
 
@@ -43,10 +44,10 @@ namespace Add_Custom_Teleport_Point
         {
             if (_harmonyInstance == null) return;
 
-            ModLogger.Log($"_harmonyInstance : {_harmonyInstance} _isInitialized : {_isInitialized}");
+            Debug.Log($"{Constant.LogPrefix} _harmonyInstance : {_harmonyInstance} _isInitialized : {_isInitialized}");
             if (!UnpatchAll())
             {
-                ModLogger.LogError("Failed to unpatch Harmony patches during uninitialization.");
+                Debug.LogError($"{Constant.LogPrefix} Failed to unpatch Harmony patches during uninitialization.");
             }
             InvokeModEntryMethod("Uninitialize");
 
@@ -58,7 +59,7 @@ namespace Add_Custom_Teleport_Point
         {
             if (!_isInitialized)
             {
-                ModLogger.LogError("Harmony is not initialized. Cannot apply patches.");
+                Debug.LogError($"{Constant.LogPrefix} Harmony is not initialized. Cannot apply patches.");
                 return false;
             }
 
@@ -66,13 +67,13 @@ namespace Add_Custom_Teleport_Point
             {
                 var patchAllMethod = _harmonyInstance!.GetType().GetMethod("PatchAll", [typeof(Assembly)]);
                 patchAllMethod!.Invoke(_harmonyInstance, [assembly]);
-                ModLogger.Log("Harmony Patches Applied Successfully");
+                Debug.Log($"{Constant.LogPrefix} Harmony Patches Applied Successfully");
                 return true;
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"Error Applying Harmony Patches: {ex}");
-                ModLogger.LogError($"Stack Trace: {ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} Error Applying Harmony Patches: {ex}");
+                Debug.LogError($"{Constant.LogPrefix} Stack Trace: {ex.StackTrace}");
             }
 
             return false;
@@ -82,13 +83,13 @@ namespace Add_Custom_Teleport_Point
         {
             if (!_isInitialized)
             {
-                ModLogger.LogError("Harmony is not initialized. Cannot remove patches.");
+                Debug.LogError($"{Constant.LogPrefix} Harmony is not initialized. Cannot remove patches.");
                 return false;
             }
 
             if (_harmonyInstance == null)
             {
-                ModLogger.LogError("Harmony instance is null. Cannot remove patches.");
+                Debug.LogError($"{Constant.LogPrefix} Harmony instance is null. Cannot remove patches.");
                 return false;
             }
 
@@ -96,12 +97,12 @@ namespace Add_Custom_Teleport_Point
             {
                 var unpatchAllMethod = _harmonyInstance.GetType().GetMethod("UnpatchAll", [typeof(string)]);
                 unpatchAllMethod!.Invoke(_harmonyInstance, [Constant.HarmonyId]);
-                ModLogger.Log("Harmony Patches Removed Successfully");
+                Debug.Log($"{Constant.LogPrefix} Harmony Patches Removed Successfully");
                 return true;
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"Error Removing Harmony Patches: {ex}");
+                Debug.LogError($"{Constant.LogPrefix} Error Removing Harmony Patches: {ex}");
             }
 
             return false;
@@ -120,7 +121,7 @@ namespace Add_Custom_Teleport_Point
 
         public static void ReadyToPatch()
         {
-            ModLogger.Log("Harmony start Patch");
+            Debug.Log($"{Constant.LogPrefix} Harmony start Patch");
             _isInitialized = true;
             OnReadyToPatch?.Invoke();
         }
@@ -128,11 +129,11 @@ namespace Add_Custom_Teleport_Point
         public static void OnModActivated(ModInfo modInfo, Duckov.Modding.ModBehaviour modBehaviour)
         {
             if (modBehaviour.GetType().Assembly == typeof(HarmonyLoader).Assembly) return;
-            ModLogger.Log($"Mod Activated: {modInfo.name}. Attempting to initialize Harmony again.");
+            Debug.Log($"{Constant.LogPrefix} Mod Activated: {modInfo.name}. Attempting to initialize Harmony again.");
 
             if (!LoadHarmony()) return;
 
-            ModLogger.Log("Harmony Initialized Successfully on Mod Activation");
+            Debug.Log($"{Constant.LogPrefix} Harmony Initialized Successfully on Mod Activation");
             UnregisterModActivatedEvents();
             ReadyToPatch();
         }
@@ -146,14 +147,14 @@ namespace Add_Custom_Teleport_Point
                 {
                     if (!FindHarmonyLibLocally(out var harmonyAssembly))
                     {
-                        ModLogger.LogError("HarmonyLib not found. Please ensure Harmony is installed.");
+                        Debug.LogError($"{Constant.LogPrefix} HarmonyLib not found. Please ensure Harmony is installed.");
                         return false;
                     }
 
                     harmonyType = harmonyAssembly.GetType("HarmonyLib.Harmony");
                     if (harmonyType == null)
                     {
-                        ModLogger.LogError("HarmonyLib.Harmony type not found in Harmony assembly.");
+                        Debug.LogError($"{Constant.LogPrefix} HarmonyLib.Harmony type not found in Harmony assembly.");
                         return false;
                     }
                 }
@@ -163,7 +164,7 @@ namespace Add_Custom_Teleport_Point
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"Error initializing Harmony: {ex}");
+                Debug.LogError($"{Constant.LogPrefix} Error initializing Harmony: {ex}");
             }
 
             return false;
@@ -182,23 +183,23 @@ namespace Add_Custom_Teleport_Point
 
                 try
                 {
-                    ModLogger.Log($"Loading Assembly from: {targetAssemblyFile}");
+                    Debug.Log($"{Constant.LogPrefix} Loading Assembly from: {targetAssemblyFile}");
 
                     var bytes = File.ReadAllBytes(targetAssemblyFile);
                     var targetAssembly = Assembly.Load(bytes);
                     harmonyAssembly = targetAssembly;
 
-                    ModLogger.Log("HarmonyLib Assembly Loaded Successfully");
+                    Debug.Log($"{Constant.LogPrefix} HarmonyLib Assembly Loaded Successfully");
                     return true;
                 }
                 catch (Exception ex)
                 {
-                    ModLogger.LogError($"Error loading HarmonyLib assembly: {ex}");
+                    Debug.LogError($"{Constant.LogPrefix} Error loading HarmonyLib assembly: {ex}");
                 }
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"Error finding HarmonyLib assembly: {ex}");
+                Debug.LogError($"{Constant.LogPrefix} Error finding HarmonyLib assembly: {ex}");
             }
 
             return false;
@@ -209,25 +210,25 @@ namespace Add_Custom_Teleport_Point
             var modEntryType = typeof(ModBehaviour).Assembly.GetType($"{Constant.ModId}.ModEntry");
             if (modEntryType == null)
             {
-                ModLogger.LogWarning("ModEntry type not found in target assembly. Skipping method invocation.");
+                Debug.LogWarning($"{Constant.LogPrefix} ModEntry type not found in target assembly. Skipping method invocation.");
                 return;
             }
 
             var method = modEntryType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Static);
             if (method == null)
             {
-                ModLogger.LogWarning($"ModEntry.{methodName} method not found. Skipping invocation.");
+                Debug.LogWarning($"{Constant.LogPrefix} ModEntry.{methodName} method not found. Skipping invocation.");
                 return;
             }
 
             try
             {
                 method.Invoke(null, null);
-                ModLogger.Log($"ModEntry.{methodName} invoked successfully.");
+                Debug.Log($"{Constant.LogPrefix} ModEntry.{methodName} invoked successfully.");
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"Error invoking ModEntry.{methodName}: {ex}");
+                Debug.LogError($"{Constant.LogPrefix} Error invoking ModEntry.{methodName}: {ex}");
             }
         }
 

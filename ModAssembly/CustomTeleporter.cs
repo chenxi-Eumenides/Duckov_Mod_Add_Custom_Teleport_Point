@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Duckov.Scenes;
@@ -15,11 +16,13 @@ namespace Add_Custom_Teleport_Point
         private SceneInfo sourceSceneInfo;
         private SceneInfo targetSceneInfo;
 
+        private List<InteractableBase> otherInterablesInGroup = new List<InteractableBase>();
+
         public string ID => id;
-        public string displayName = "";
         public bool showMarker = true;
         public Vector3 markerOffset = Vector3.up * 1f;
         public float teleportCooldown = 1f;
+        public string displayName => InteractName;
         public bool isCrossLevel => targetSceneInfo.mainSceneID != sourceSceneInfo.mainSceneID;
 
         public static bool IsTeleporting => isTeleporting;
@@ -30,14 +33,13 @@ namespace Add_Custom_Teleport_Point
             string sourceSceneID, Vector3 sourcePosition,
             string targetSceneID, Vector3 targetPosition)
         {
-            id = $"CrossLevelTeleportPoint_{index}";
+            id = $"{Constant.CustomTeleporterPrefix}_{index}";
             gameObject.name = id;
-            displayName = displayContext;
-            sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"CrossLevelTeleportPoint_source_{index}");
-            targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"CrossLevelTeleportPoint_target_{index}");
+            sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"{Constant.CustomTeleporterPrefix}_source_{index}");
+            targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"{Constant.CustomTeleporterPrefix}_target_{index}");
 
             transform.position = sourceSceneInfo.Position;
-            InteractName = displayName;
+            InteractName = displayContext;
             interactMarkerOffset = markerOffset;
             MarkerActive = showMarker;
             var collider = GetComponent<BoxCollider>();
@@ -80,17 +82,14 @@ namespace Add_Custom_Teleport_Point
             try
             {
                 Teleport(sourceSceneInfo, targetSceneInfo).Forget();
-                isTeleporting = false;
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"传送失败: {ex.Message}");
-                ModLogger.LogError($"调用栈: {ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} 传送失败: {ex.Message}");
+                Debug.LogError($"{Constant.LogPrefix} 调用栈: {ex.StackTrace}");
             }
-            finally
-            {
-                StopInteract();
-            }
+            isTeleporting = false;
+            StopInteract();
         }
 
         // 交互停止时的处理
@@ -107,7 +106,7 @@ namespace Add_Custom_Teleport_Point
             cancelRegisterCallFuncs();
         }
 
-        // 验证是否有效
+        // 验证是否传传送点有效
         public bool isValidTeleporter()
         {
             return isInitialized &&
@@ -124,7 +123,7 @@ namespace Add_Custom_Teleport_Point
                    isValidTeleporter();
         }
 
-        // 核心处理
+        // 核心传送处理
         private async UniTask Teleport(SceneInfo sourceSceneInfo, SceneInfo targetSceneInfo)
         {
             if (isCrossLevel)
@@ -140,6 +139,7 @@ namespace Add_Custom_Teleport_Point
                 // 导致lootbox获取 LevelManager.LootBoxInventories 和 LootBoxInventoriesParent 失败
                 // 2. TimeOfDayController 未及时创建，报空指针、空对象，还未找具体是哪行代码导致的
                 // TimeOfDayController 可能需要 TimeOfDayConfig
+                InputManager.DisableInput(base.gameObject);
                 await SceneLoader.Instance.LoadScene(
                     sceneReference: targetSceneInfo.SceneReference,
                     location: targetSceneInfo.Location,
@@ -194,55 +194,324 @@ namespace Add_Custom_Teleport_Point
 
         private void onBeforeSetSceneActive(SceneLoadingContext context)
         {
-            // 尝试解决缺少必要的组件或属性问题，未成功
-            // 正常关卡的父子关系是
-            // LevelConfig -> LevelManager -> TimeOfDayController
-            // LevelConfig -> TimeOfDayConfig
-            LevelConfig lcObj;
-            if (LevelConfig.Instance == null)
-            {
-                ModLogger.Log($"Start init LevelConfig");
-                lcObj = new GameObject("LevelConfig").AddComponent<LevelConfig>();
-                RFH.InvokePrivateMethod(lcObj, "Awake"); // 应该会创建 levelmanager
-            }
-            else
-            {
-                lcObj = LevelConfig.Instance;
-            }
-            if (LevelManager.Instance == null)
-            {
-                ModLogger.Log($"Start init LevelManager");
-            }
-            else
-            {
-                var tdControllerObj = new GameObject("TimeOfDayController").AddComponent<TimeOfDayController>();
-                tdControllerObj.gameObject.transform.SetParent(LevelManager.Instance.transform);
-            }
-            if (FindObjectsOfType<TimeOfDayConfig>().Length == 0)
-            {
-                TimeOfDayConfig tdConfigObj = new GameObject("TimeOfDayConfig").AddComponent<TimeOfDayConfig>();
-                tdConfigObj.gameObject.transform.SetParent(lcObj.gameObject.transform);
-            }
+            Debug.Log($"{Constant.LogPrefix} onBeforeSetSceneActive: 开始场景初始化准备");
+
+            // 确保LevelConfig存在并初始化
+            // EnsureGameCoreComponents();
         }
 
         private void onFinishedLoadingScene(SceneLoadingContext context)
         {
+            Debug.Log($"{Constant.LogPrefix} onFinishedLoadingScene: 场景加载完成");
+
+            // 场景加载完成后，再次检查核心组件
+            // PostLoadComponentCheck();
         }
 
         private void onAfterSceneInitialize(SceneLoadingContext context)
         {
+            Debug.Log($"{Constant.LogPrefix} onAfterSceneInitialize: 场景初始化完成");
+
+            // 最终验证所有组件
+            // FinalComponentValidation();
+        }
+
+        // 核心辅助方法：确保游戏核心组件存在并初始化
+        private void EnsureGameCoreComponents()
+        {
+            Debug.Log($"{Constant.LogPrefix} 确保游戏核心组件初始化...");
+
+            // 1. 确保LevelConfig存在
+            EnsureLevelConfigExists();
+
+            // 2. 确保LevelManager被创建
+            EnsureLevelManagerCreated();
+
+            // 3. 确保TimeOfDayConfig存在
+            EnsureTimeOfDayConfigExists();
+
+            // 4. 确保TimeOfDayController有正确引用
+            EnsureTimeOfDayControllerLinked();
+
+            Debug.Log($"{Constant.LogPrefix} 游戏核心组件初始化完成");
+        }
+
+        // 确保LevelConfig存在
+        private void EnsureLevelConfigExists()
+        {
+            if (LevelConfig.Instance == null)
+            {
+                Debug.Log($"{Constant.LogPrefix} 创建LevelConfig...");
+
+                // 创建LevelConfig GameObject
+                GameObject levelConfigObj = new GameObject("LevelConfig");
+                LevelConfig levelConfig = levelConfigObj.AddComponent<LevelConfig>();
+
+                // 调用Awake方法以创建LevelManager
+                try
+                {
+                    RFH.InvokePrivateMethod(levelConfig, "Awake");
+                    Debug.Log($"{Constant.LogPrefix} LevelConfig.Awake()调用成功");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"{Constant.LogPrefix} 调用LevelConfig.Awake()失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} LevelConfig已存在: {LevelConfig.Instance.gameObject.name}");
+            }
+        }
+
+        // 确保LevelManager被创建
+        private void EnsureLevelManagerCreated()
+        {
+            if (LevelManager.Instance == null)
+            {
+                Debug.Log($"{Constant.LogPrefix} 等待LevelManager创建...");
+
+                // 检查LevelConfig下是否有LevelManager
+                if (LevelConfig.Instance != null)
+                {
+                    LevelManager manager = LevelConfig.Instance.GetComponentInChildren<LevelManager>();
+                    if (manager != null)
+                    {
+                        Debug.Log($"{Constant.LogPrefix} 在LevelConfig下找到LevelManager: {manager.gameObject.name}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{Constant.LogPrefix} LevelConfig下未找到LevelManager");
+                        // 尝试手动查找
+                        manager = FindAnyObjectByType<LevelManager>();
+                        if (manager != null)
+                        {
+                            Debug.Log($"{Constant.LogPrefix} 在场景中找到LevelManager: {manager.gameObject.name}");
+                        }
+                    }
+                }
+
+                // 如果仍然没有找到，记录错误
+                if (LevelManager.Instance == null)
+                {
+                    Debug.LogError($"{Constant.LogPrefix} LevelManager未创建，游戏可能无法正常运行");
+                }
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} LevelManager已存在: {LevelManager.Instance.gameObject.name}");
+            }
+        }
+
+        // 确保TimeOfDayConfig存在
+        private void EnsureTimeOfDayConfigExists()
+        {
+            // 查找场景中所有的TimeOfDayConfig
+            TimeOfDayConfig[] configs = FindObjectsOfType<TimeOfDayConfig>();
+
+            if (configs.Length == 0)
+            {
+                Debug.Log($"{Constant.LogPrefix} 创建TimeOfDayConfig...");
+
+                // 创建TimeOfDayConfig
+                GameObject configObj = new GameObject("TimeOfDayConfig");
+                TimeOfDayConfig config = configObj.AddComponent<TimeOfDayConfig>();
+
+                // 设置父对象
+                if (LevelConfig.Instance != null)
+                {
+                    configObj.transform.SetParent(LevelConfig.Instance.transform);
+                    Debug.Log($"{Constant.LogPrefix} TimeOfDayConfig已附加到LevelConfig");
+                }
+
+                // 设置默认值
+                try
+                {
+                    RFH.SetFieldValue(config, "forceSetTime", false);
+                    RFH.SetFieldValue(config, "forceSetWeather", false);
+                    Debug.Log($"{Constant.LogPrefix} TimeOfDayConfig默认值设置完成");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"{Constant.LogPrefix} 设置TimeOfDayConfig默认值失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} 找到{configs.Length}个TimeOfDayConfig实例");
+
+                // 确保至少一个TimeOfDayConfig被LevelConfig引用
+                if (LevelConfig.Instance != null && LevelConfig.Instance.timeOfDayConfig == null)
+                {
+                    LevelConfig.Instance.timeOfDayConfig = configs[0];
+                    Debug.Log($"{Constant.LogPrefix} 已将TimeOfDayConfig分配给LevelConfig");
+                }
+            }
+        }
+
+        // 确保TimeOfDayController有正确引用
+        private void EnsureTimeOfDayControllerLinked()
+        {
+            if (LevelManager.Instance == null) return;
+
+            var timeOfDayController = LevelManager.Instance.TimeOfDayController;
+
+            if (timeOfDayController == null)
+            {
+                Debug.Log($"{Constant.LogPrefix} 创建TimeOfDayController...");
+
+                // 创建TimeOfDayController
+                GameObject controllerObj = new GameObject("TimeOfDayController");
+                TimeOfDayController controller = controllerObj.AddComponent<TimeOfDayController>();
+
+                // 附加到LevelManager
+                controllerObj.transform.SetParent(LevelManager.Instance.transform);
+                Debug.Log($"{Constant.LogPrefix} TimeOfDayController已附加到LevelManager");
+
+                // 设置config引用
+                if (LevelConfig.Instance != null && LevelConfig.Instance.timeOfDayConfig != null)
+                {
+                    try
+                    {
+                        RFH.SetFieldValue(controller, "config", LevelConfig.Instance.timeOfDayConfig);
+                        Debug.Log($"{Constant.LogPrefix} TimeOfDayController.config已设置");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"{Constant.LogPrefix} 设置TimeOfDayController.config失败: {ex.Message}");
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} TimeOfDayController已存在: {timeOfDayController.gameObject.name}");
+
+                // 确保config引用正确
+                try
+                {
+                    var config = RFH.GetFieldValue(timeOfDayController, "config");
+                    if (config == null && LevelConfig.Instance != null && LevelConfig.Instance.timeOfDayConfig != null)
+                    {
+                        RFH.SetFieldValue(timeOfDayController, "config", LevelConfig.Instance.timeOfDayConfig);
+                        Debug.Log($"{Constant.LogPrefix} 已修复TimeOfDayController.config引用");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"{Constant.LogPrefix} 检查TimeOfDayController.config失败: {ex.Message}");
+                }
+            }
+        }
+
+        // 场景加载后的组件检查
+        private void PostLoadComponentCheck()
+        {
+            Debug.Log($"{Constant.LogPrefix} 场景加载后组件检查...");
+
+            // 再次确保核心组件
+            EnsureGameCoreComponents();
+
+            // 检查LootBoxInventories
+            try
+            {
+                var parent = LevelManager.LootBoxInventoriesParent;
+                if (parent != null)
+                {
+                    Debug.Log($"{Constant.LogPrefix} LootBoxInventoriesParent存在: {parent.name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Constant.LogPrefix} 检查LootBoxInventories失败: {ex.Message}");
+            }
+
+            Debug.Log($"{Constant.LogPrefix} 场景加载后组件检查完成");
+        }
+
+        // 最终组件验证
+        private void FinalComponentValidation()
+        {
+            Debug.Log($"{Constant.LogPrefix} 最终组件验证...");
+
+            bool allOk = true;
+
+            // 验证LevelConfig
+            if (LevelConfig.Instance == null)
+            {
+                Debug.LogError($"{Constant.LogPrefix} ❌ LevelConfig缺失");
+                allOk = false;
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} ✓ LevelConfig存在");
+            }
+
+            // 验证LevelManager
+            if (LevelManager.Instance == null)
+            {
+                Debug.LogError($"{Constant.LogPrefix} ❌ LevelManager缺失");
+                allOk = false;
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} ✓ LevelManager存在");
+
+                // 验证关键组件
+                if (LevelManager.Instance.TimeOfDayController == null)
+                {
+                    Debug.LogWarning($"{Constant.LogPrefix} ⚠ TimeOfDayController缺失");
+                }
+                else
+                {
+                    Debug.Log($"{Constant.LogPrefix} ✓ TimeOfDayController存在");
+                }
+
+                if (LevelManager.Instance.InputManager == null)
+                {
+                    Debug.LogWarning($"{Constant.LogPrefix} ⚠ InputManager缺失");
+                }
+                else
+                {
+                    Debug.Log($"{Constant.LogPrefix} ✓ InputManager存在");
+                }
+            }
+
+            // 验证TimeOfDayConfig
+            TimeOfDayConfig[] configs = FindObjectsOfType<TimeOfDayConfig>();
+            if (configs.Length == 0)
+            {
+                Debug.LogWarning($"{Constant.LogPrefix} ⚠ TimeOfDayConfig缺失");
+            }
+            else
+            {
+                Debug.Log($"{Constant.LogPrefix} ✓ 找到{configs.Length}个TimeOfDayConfig");
+            }
+
+            if (allOk)
+            {
+                Debug.Log($"{Constant.LogPrefix} 所有关键组件验证通过");
+            }
+            else
+            {
+                Debug.LogWarning($"{Constant.LogPrefix} 部分关键组件有问题，游戏可能无法正常运行");
+            }
+
+            Debug.Log($"{Constant.LogPrefix} 最终组件验证完成");
         }
 
         private void OnLevelBeginInitializing()
         {
+            Debug.Log($"{Constant.LogPrefix} OnLevelBeginInitializing: 关卡开始初始化");
         }
 
         private void OnLevelInitialized()
         {
+            Debug.Log($"{Constant.LogPrefix} OnLevelInitialized: 关卡初始化完成");
         }
 
         private void OnAfterLevelInitialized()
         {
+            Debug.Log($"{Constant.LogPrefix} OnAfterLevelInitialized: 关卡后初始化完成");
         }
     }
 }

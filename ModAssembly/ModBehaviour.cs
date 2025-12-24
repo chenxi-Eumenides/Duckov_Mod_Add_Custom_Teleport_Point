@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Add_Custom_Teleport_Point
@@ -6,6 +7,7 @@ namespace Add_Custom_Teleport_Point
     public class ModBehaviour : Duckov.Modding.ModBehaviour
     {
         public static ModBehaviour? Instance { get; private set; }
+        public static Dictionary<int, Dictionary<string, object>> lastGameState = new Dictionary<int, Dictionary<string, object>>();
 
         // 创建时
         private void Awake()
@@ -16,10 +18,10 @@ namespace Add_Custom_Teleport_Point
         // 启用时
         private void OnEnable()
         {
-            ModLogger.Log($"{Constant.ModName} Loaded");
+            Debug.Log($"{Constant.ModName} Loaded");
+            registerCallFuncs();
 
-            registerCustomConfig();
-
+            registerCustomTeleportConfig();
             customEvent.onSceneLoad += TeleporterManager.Init;
 
             HarmonyLoader.Initialize();
@@ -30,9 +32,8 @@ namespace Add_Custom_Teleport_Point
         {
             OnModDisabled?.Invoke();
 
-            TeleporterManager.RemoveCreatedTeleportPoint();
-
             customEvent.onSceneLoad -= TeleporterManager.Init;
+            TeleporterManager.RemoveCreatedTeleportPoint();
 
             HarmonyLoader.Uninitialize();
         }
@@ -47,13 +48,13 @@ namespace Add_Custom_Teleport_Point
 
         // 在这里注册自定义的传送点配置
         // 为了整洁，仅此
-        private void registerCustomConfig()
+        private void registerCustomTeleportConfig()
         {
             TeleporterManager.registerTeleportPoint(
                 sourceSceneId: Constant.SCENE_ID_BASE,
                 sourcePosition: new Vector3(-5f, 0f, -85f),
                 targetSceneId: Constant.SCENE_ID_BASE_2,
-                targetPosition: new Vector3(95f, 0f, -70f),
+                targetPosition: new Vector3(95f, 0f, -40f),
                 interactName: "同地图传送",
                 backTeleport: true
             );
@@ -70,7 +71,7 @@ namespace Add_Custom_Teleport_Point
                 sourcePosition: new Vector3(-7f, 0f, -85f),
                 targetSceneId: Constant.SCENE_ID_FARM_JLAB_FACILITY,
                 targetPosition: new Vector3(910f, 0f, 600f),
-                interactName: "跨地图传送-农场镇jlab",
+                interactName: "跨地图传送-农场镇JLab",
                 backTeleport: true
             );
         }
@@ -101,66 +102,45 @@ namespace Add_Custom_Teleport_Point
         // 测试用
         private static void onStartedLoadingScene(SceneLoadingContext context)
         {
-            ModLogger.Log($"onStartedLoadingScene 关卡加载开始");
+            Debug.Log($"{Constant.LogPrefix} onStartedLoadingScene 关卡加载开始");
         }
 
         // 测试用
         private static void onFinishedLoadingScene(SceneLoadingContext context)
         {
-            ModLogger.Log($"onFinishedLoadingScene");
+            Debug.Log($"{Constant.LogPrefix} onFinishedLoadingScene");
         }
 
         // 测试用
         private static void onBeforeSetSceneActive(SceneLoadingContext context)
         {
-            ModLogger.Log($"onBeforeSetSceneActive");
+            Debug.Log($"{Constant.LogPrefix} onBeforeSetSceneActive");
+            // lastGameState = Test.CaptureCurrentState();
         }
 
         // 测试用
         private static void onAfterSceneInitialize(SceneLoadingContext context)
         {
-            ModLogger.Log($"onAfterSceneInitialize");
-            if (LevelConfig.Instance != null)
-            {
-                var tdc = LevelConfig.Instance.timeOfDayConfig;
-                var defaultEntry = (TimeOfDayEntry?)RFH.GetFieldValue(tdc, "defaultEntry");
-                var cloudyEntry = (TimeOfDayEntry?)RFH.GetFieldValue(tdc, "cloudyEntry");
-                var rainyEntry = (TimeOfDayEntry?)RFH.GetFieldValue(tdc, "rainyEntry");
-                var stormIEntry = (TimeOfDayEntry?)RFH.GetFieldValue(tdc, "stormIEntry");
-                var stormIIEntry = (TimeOfDayEntry?)RFH.GetFieldValue(tdc, "stormIIEntry");
-                // var lbl = new LootBoxLoader();
-                var lm = LevelManager.Instance;
-                var lbi = LevelManager.LootBoxInventories;
-                ModLogger.LogWarning($"LevelManager: {lm} {lbi} {lbi.Count}");
-            }
+            Debug.Log($"{Constant.LogPrefix} onAfterSceneInitialize");
+            // Test.CompareAndPrintStateDifferences(lastGameState, Test.CaptureCurrentState());
         }
 
         // 测试用
         private static void OnLevelBeginInitializing()
         {
-            ModLogger.Log($"OnLevelBeginInitializing");
-            // 获取数据结构
-            var todcObj = TimeOfDayController.Instance?.gameObject;
-            var todcPObj = todcObj?.transform?.parent?.gameObject;
-            var todcPPObj = todcPObj?.transform?.parent?.gameObject;
-            ModLogger.Log($"TimeOfDayController:{todcObj?.name} -> {todcPObj?.name} -> {todcPPObj?.name}");
-            var todconfig = (TimeOfDayConfig?)RFH.GetFieldValue(TimeOfDayController.Instance ?? new TimeOfDayController(), "config");
-            var todconfigObj = todconfig?.transform.gameObject;
-            var todconfigPObj = todconfigObj?.transform?.parent?.gameObject;
-            var todconfigPPObj = todconfigPObj?.transform?.parent?.gameObject;
-            ModLogger.Log($"TimeOfDayController:{todconfigObj?.name} -> {todconfigPObj?.name} -> {todconfigPPObj?.name}");
+            Debug.Log($"{Constant.LogPrefix} OnLevelBeginInitializing");
         }
 
         // 测试用
         private static void OnLevelInitialized()
         {
-            ModLogger.Log($"OnLevelInitialized");
+            Debug.Log($"{Constant.LogPrefix} OnLevelInitialized");
         }
 
         // 测试用
         private static void OnAfterLevelInitialized()
         {
-            ModLogger.Log($"OnAfterLevelInitialized 关卡加载结束");
+            Debug.Log($"{Constant.LogPrefix} OnAfterLevelInitialized 关卡加载结束");
         }
 
         public event Action? OnModDisabled;

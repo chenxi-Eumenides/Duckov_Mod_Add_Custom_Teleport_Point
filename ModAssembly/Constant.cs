@@ -1,13 +1,14 @@
 namespace Add_Custom_Teleport_Point
 {
-    /// <summary>
-    /// Constant values for the universal teleporter mod
-    /// </summary>
     public static class Constant
     {
         public const string ModId = "Add_Custom_Teleport_Point";
         public const string ModName = "Add_Custom_Teleport_Point";
         public const string HarmonyId = "com.chenxi-Eumenides.Add_Custom_Teleport_Point";
+        public const string LogPrefix = $"[{ModName}]";
+
+        public const string CustomLocationPrefix = "CustomLocation";
+        public const string CustomTeleporterPrefix = "CustomTeleporter";
 
         public const string MAIN_SCENE_ID_BASE = "Base_main";
         public const string MAIN_SCENE_ID_GROUNDZERO = "Level_GroundZero_main";

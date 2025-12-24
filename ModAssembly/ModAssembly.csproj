@@ -7,6 +7,7 @@
         <LangVersion>latest</LangVersion>
         <PlatformTarget>x64</PlatformTarget>
         <DuckovPath>D:\Apps\Steam\steamapps\common\Escape from Duckov</DuckovPath>
+        <OutputCopyDir>output</OutputCopyDir>
     </PropertyGroup>
 
     <ItemGroup>
@@ -49,5 +50,18 @@
         <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
         <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     </PropertyGroup>
+
+    <Target Name="CopyToOutputFolder" AfterTargets="Build">
+        <MakeDir Directories="$(OutputCopyDir)" />
+        <Copy SourceFiles="$(TargetPath)"
+              DestinationFolder="$(OutputCopyDir)"
+              SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(ProjectDir)/info.ini"
+              DestinationFolder="$(OutputCopyDir)"
+              SkipUnchangedFiles="true" />
+    </Target>
+    <Target Name="CleanOutputFolder" BeforeTargets="Clean">
+        <RemoveDir Directories="$(OutputCopyDir)" />
+    </Target>
 
 </Project>

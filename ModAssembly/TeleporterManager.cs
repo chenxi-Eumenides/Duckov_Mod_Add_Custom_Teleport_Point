@@ -22,27 +22,77 @@ namespace Add_Custom_Teleport_Point
             // 未注册时，configID为 -1
             if (config.configID < 0)
             {
-                ModLogger.LogWarning("传入的config未注册");
+                Debug.LogWarning($"{Constant.LogPrefix} 传入的config未注册");
                 return false;
             }
             try
             {
                 // 创建传送点
-                if (!createTpPoint(config)) return false;
+                if (!createTpPointCustom(config)) return false;
                 // 打印日志
-                ModLogger.Log($"创建成功！传送点 TeleportPoint_{config.configID}: {config.sourceSceneId}({config.sourcePosition}) => {config.targetSceneId}({config.targetPosition})");
+                Debug.Log($"{Constant.LogPrefix} 创建成功！传送点 TeleportPoint_{config.configID}: {config.sourceSceneId}({config.sourcePosition}) => {config.targetSceneId}({config.targetPosition})");
                 return true;
             }
             catch (Exception ex)
             {
-                ModLogger.LogError($"创建失败！报错信息: {ex.Message}");
-                ModLogger.LogError($"堆栈跟踪: {ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} 创建失败！报错信息: {ex.Message}");
+                Debug.LogError($"{Constant.LogPrefix} 堆栈跟踪: {ex.StackTrace}");
                 return false;
             }
         }
 
         // 创建传送点实例对象
-        private static bool createTpPoint(TeleportConfig config)
+        private static bool createTpPointTest(TeleportConfig config)
+        {
+            // 创建空游戏对象
+            GameObject teleportPoint = new GameObject();
+            string locationName = $"TeleportPoint_{config.sourceSceneId}{config.sourcePosition}_to_{config.targetSceneId}{config.targetPosition}";
+            teleportPoint.name = locationName;
+            teleportPoint.transform.position = config.sourcePosition;
+            teleportPoint.layer = LayerMask.NameToLayer("Interactable");
+
+            InteractableBase InteractableBase = teleportPoint.AddComponent<InteractableBase>();
+            InteractableBase.InteractName = config.interactName;
+            InteractableBase.interactMarkerOffset = Vector3.up * 1f;
+            InteractableBase.MarkerActive = true;
+
+            var collider = teleportPoint.GetComponent<BoxCollider>();
+            if (collider == null) collider = teleportPoint.AddComponent<BoxCollider>();
+            collider.size = new Vector3(1f, 2f, 1f);
+            collider.isTrigger = true;
+            collider.enabled = true;
+
+            CustomLocation.AddCustomLocation(config.targetSceneId, locationName, config.targetPosition);
+            SceneLoaderProxy SceneLoader = teleportPoint.AddComponent<SceneLoaderProxy>();
+            RFH.SetFieldValue(SceneLoader,"sceneID",config.targetSceneId);
+            RFH.SetFieldValue(SceneLoader,"useLocation",true);
+            RFH.SetFieldValue(SceneLoader,"location",new MultiSceneLocation
+            {
+                SceneID = config.targetSceneId,
+                LocationName = locationName
+            });
+            RFH.SetFieldValue(SceneLoader,"notifyEvacuation",false);
+            RFH.SetFieldValue(SceneLoader,"hideTips",false);
+            RFH.SetFieldValue(SceneLoader,"overrideCurtainScene",null!);
+            
+
+            // 注册到场景系统
+            if (MultiSceneCore.MainScene != null && MultiSceneCore.MainScene.HasValue)
+            {
+                SceneManager.MoveGameObjectToScene(teleportPoint, MultiSceneCore.MainScene.Value);
+            }
+            else
+            {
+                Debug.LogError($"{Constant.LogPrefix} 注册到场景系统失败");
+                return false;
+            }
+            // 添加到已创建列表
+            createdTeleportPoint.Add(teleportPoint);
+            return true;
+        }
+
+        // 创建传送点实例对象
+        private static bool createTpPointCustom(TeleportConfig config)
         {
             // 创建空游戏对象
             GameObject teleportPoint = new GameObject();
@@ -56,13 +106,13 @@ namespace Add_Custom_Teleport_Point
             if (!CustomTeleporter.isValidTeleporter()) return false;
 
             // 注册到场景系统
-            if (MultiSceneCore.MainScene != null && MultiSceneCore.MainScene.HasValue)
+            if (MultiSceneCore.ActiveSubScene != null && MultiSceneCore.ActiveSubScene.HasValue)
             {
-                SceneManager.MoveGameObjectToScene(teleportPoint, MultiSceneCore.MainScene.Value);
+                SceneManager.MoveGameObjectToScene(teleportPoint, MultiSceneCore.ActiveSubScene.Value);
             }
             else
             {
-                ModLogger.LogError($"注册到场景系统失败");
+                Debug.LogError($"{Constant.LogPrefix} 注册到场景系统失败: {MultiSceneCore.MainScene}");
                 return false;
             }
             // 添加到已创建列表
@@ -102,7 +152,7 @@ namespace Add_Custom_Teleport_Point
                     sourcePosition: targetPosition,
                     targetSceneId: sourceSceneId,
                     targetPosition: sourcePosition,
-                    interactName: interactName + "-返回",
+                    interactName: "[返回] " + interactName,
                     interactTime: interactTime
                 );
                 if (isVaildConfig(backConfig))
@@ -119,6 +169,7 @@ namespace Add_Custom_Teleport_Point
         {
             maxRegisteredConfig += 1;
             config.configID = maxRegisteredConfig;
+            SodaCraft.Localizations.LocalizationManager.SetOverrideText(config.interactName, config.interactName);
             registeredConfig.Add(config);
         }
 
@@ -133,7 +184,7 @@ namespace Add_Custom_Teleport_Point
                 }
             }
             createdTeleportPoint.Clear();
-            ModLogger.Log("已经移除所有传送点");
+            Debug.Log($"{Constant.LogPrefix} 已经移除所有传送点");
         }
 
         public static bool CancelTeleportPointConfig(int configID)
@@ -177,16 +228,16 @@ namespace Add_Custom_Teleport_Point
             RemoveCreatedTeleportPoint();
             if (MultiSceneCore.ActiveSubSceneID == null)
             {
-                ModLogger.LogWarning("ActiveSubSceneID 为 null, 无法创建传送点");
+                Debug.LogWarning($"{Constant.LogPrefix} ActiveSubSceneID 为 null, 无法创建传送点");
                 return;
             }
-            ModLogger.Log($"场景已加载{MultiSceneCore.ActiveSubSceneID}，已注册传送点{registeredConfig.Count}个，准备创建传送点");
+            Debug.Log($"{Constant.LogPrefix} 场景已加载{MultiSceneCore.ActiveSubSceneID}，已注册传送点{registeredConfig.Count}个，准备创建传送点");
 
             foreach (var config in registeredConfig)
             {
                 if (MultiSceneCore.ActiveSubSceneID == config.sourceSceneId)
                 {
-                    if (!createTeleportPoint(config)) ModLogger.LogError($"传送点({config.interactName})创建失败");
+                    if (!createTeleportPoint(config)) Debug.LogError($"{Constant.LogPrefix} 传送点({config.interactName})创建失败");
                 }
             }
         }
