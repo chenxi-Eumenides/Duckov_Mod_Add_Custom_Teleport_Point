@@ -24,6 +24,7 @@ namespace Add_Custom_Teleport_Point
         public float teleportCooldown = 1f;
         public string displayName => InteractName;
         public bool isCrossLevel => targetSceneInfo.mainSceneID != sourceSceneInfo.mainSceneID;
+        public bool isCrossSubScene => targetSceneInfo.SceneID != sourceSceneInfo.SceneID;
         public bool Disposable = false;
 
         public static bool IsTeleporting => isTeleporting;
@@ -126,6 +127,7 @@ namespace Add_Custom_Teleport_Point
             }
             isTeleporting = false;
             StopInteract();
+            if (Disposable) Destroy(gameObject);
         }
 
         // 交互停止时的处理
@@ -165,7 +167,7 @@ namespace Add_Custom_Teleport_Point
         // 核心传送处理
         private async UniTask Teleport(SceneInfo sourceSceneInfo, SceneInfo targetSceneInfo)
         {
-            if (isCrossLevel)
+            if (sourceSceneInfo.mainSceneID != targetSceneInfo.mainSceneID)
             {
                 // 不同主场景，进行跨关卡传送
                 // 先执行 SceneLoader.LoadScene
@@ -190,14 +192,27 @@ namespace Add_Custom_Teleport_Point
                     hideTips: targetSceneInfo.hideTips
                 );
             }
-            else
+            else if (sourceSceneInfo.SceneID != targetSceneInfo.SceneID)
             {
-                // 如果是相同的主场景，就执行同关卡传送
+                // 相同的主场景，不同子场景，执行同关卡传送
                 // 可以传送到相同主场景下的子场景
                 // 比如 零号区是 Level_GroundZero_main 下的 Level_GroundZero_1
                 // 零号区山洞是 Level_GroundZero_main 下的 Level_GroundZero_Cave
                 // 目前可以正常运行，没有问题
                 await MultiSceneCore.Instance.LoadAndTeleport(targetSceneInfo.Location);
+            }
+            else
+            {
+                // 相同子场景内，直接传送
+                CharacterMainControl mainCharacter = CharacterMainControl.Main;
+                if (mainCharacter != null)
+                {
+                    mainCharacter.SetPosition(targetSceneInfo.Position);
+                    if ((bool)LevelManager.Instance)
+                    {
+                        LevelManager.Instance.GameCamera.ForceSyncPos();
+                    }
+                }
             }
         }
 
