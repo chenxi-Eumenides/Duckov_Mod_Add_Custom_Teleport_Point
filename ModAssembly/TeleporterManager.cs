@@ -101,7 +101,8 @@ namespace Add_Custom_Teleport_Point
             CustomTeleporter.Initialize(
                 config.configID, config.interactName,
                 config.sourceSceneId, config.sourcePosition,
-                config.targetSceneId, config.targetPosition
+                config.targetSceneId, config.targetPosition,
+                disposable: config.disposable
             );
             if (!CustomTeleporter.isValidTeleporter()) return false;
 
