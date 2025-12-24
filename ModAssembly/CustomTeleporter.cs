@@ -29,17 +29,41 @@ namespace Add_Custom_Teleport_Point
         public static float LastTeleportTime => lastTeleportTime;
 
         // 初始化，设置属性
-        public void Initialize(int index, string displayContext,
+        public void Initialize(int index, List<string> displayContext,
             string sourceSceneID, Vector3 sourcePosition,
             string targetSceneID, Vector3 targetPosition)
         {
+            // 设置唯一id和名称
             id = $"{Constant.CustomTeleporterPrefix}_{index}";
             gameObject.name = id;
+
+            // 设置传送点信息
             sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"{Constant.CustomTeleporterPrefix}_source_{index}");
             targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"{Constant.CustomTeleporterPrefix}_target_{index}");
 
+            // 设置交互显示名称和本地化
+            string UI_context = Constant.DEFAULT_INTERACT_NAME;
+            if (displayContext.Count >= 2)
+            {
+                UI_context = displayContext[0];
+                for (int i = 1; i < displayContext.Count; i++)
+                {
+                    SodaCraft.Localizations.LocalizationManager.SetOverrideText(UI_context, displayContext[i]);
+                }
+            }
+            else if (displayContext.Count == 1)
+            {
+                UI_context = displayContext[0];
+                SodaCraft.Localizations.LocalizationManager.SetOverrideText(UI_context, UI_context);
+            }
+            else
+            {
+                SodaCraft.Localizations.LocalizationManager.SetOverrideText(UI_context, UI_context);
+            }
+            InteractName = UI_context;
+
+            // 设置其他属性
             transform.position = sourceSceneInfo.Position;
-            InteractName = displayContext;
             interactMarkerOffset = markerOffset;
             MarkerActive = showMarker;
             var collider = GetComponent<BoxCollider>();
@@ -49,8 +73,15 @@ namespace Add_Custom_Teleport_Point
             collider.enabled = true;
             gameObject.layer = LayerMask.NameToLayer("Interactable");
 
+            // 激活
             isInitialized = true;
             Awake();
+        }
+        public void Initialize(int index, string displayContext,
+            string sourceSceneID, Vector3 sourcePosition,
+            string targetSceneID, Vector3 targetPosition)
+        {
+            Initialize(index, new List<string> { displayContext, displayContext }, sourceSceneID, sourcePosition, targetSceneID, targetPosition);
         }
 
         // 先初始化，再Awake
@@ -103,6 +134,9 @@ namespace Add_Custom_Teleport_Point
         // 销毁时的处理
         protected override void OnDestroy()
         {
+            isInitialized = false;
+            MarkerActive = false;
+            GetComponent<BoxCollider>().enabled = true;
             cancelRegisterCallFuncs();
         }
 
