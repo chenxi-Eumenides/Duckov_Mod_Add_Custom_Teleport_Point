@@ -16,6 +16,13 @@ namespace Add_Custom_Teleport_Point
         // 存储总的传送点配置注册数量，配置ID，防止名称相同
         private static int maxRegisteredConfig = 0;
 
+        public static void Initialize()
+        {
+            createdTeleportPoint.Clear();
+            registeredConfig.Clear();
+            maxRegisteredConfig = 0;
+        }
+
         // 创建传送点入口
         private static bool createTeleportPoint(TeleportConfig config)
         {
@@ -39,56 +46,6 @@ namespace Add_Custom_Teleport_Point
                 Debug.LogError($"{Constant.LogPrefix} 堆栈跟踪: {ex.StackTrace}");
                 return false;
             }
-        }
-
-        // 创建传送点实例对象
-        private static bool createTpPointTest(TeleportConfig config)
-        {
-            // 创建空游戏对象
-            GameObject teleportPoint = new GameObject();
-            string locationName = $"TeleportPoint_{config.sourceSceneId}{config.sourcePosition}_to_{config.targetSceneId}{config.targetPosition}";
-            teleportPoint.name = locationName;
-            teleportPoint.transform.position = config.sourcePosition;
-            teleportPoint.layer = LayerMask.NameToLayer("Interactable");
-
-            InteractableBase InteractableBase = teleportPoint.AddComponent<InteractableBase>();
-            InteractableBase.InteractName = config.interactName;
-            InteractableBase.interactMarkerOffset = Vector3.up * 1f;
-            InteractableBase.MarkerActive = true;
-
-            var collider = teleportPoint.GetComponent<BoxCollider>();
-            if (collider == null) collider = teleportPoint.AddComponent<BoxCollider>();
-            collider.size = new Vector3(1f, 2f, 1f);
-            collider.isTrigger = true;
-            collider.enabled = true;
-
-            CustomLocation.AddCustomLocation(config.targetSceneId, locationName, config.targetPosition);
-            SceneLoaderProxy SceneLoader = teleportPoint.AddComponent<SceneLoaderProxy>();
-            RFH.SetFieldValue(SceneLoader,"sceneID",config.targetSceneId);
-            RFH.SetFieldValue(SceneLoader,"useLocation",true);
-            RFH.SetFieldValue(SceneLoader,"location",new MultiSceneLocation
-            {
-                SceneID = config.targetSceneId,
-                LocationName = locationName
-            });
-            RFH.SetFieldValue(SceneLoader,"notifyEvacuation",false);
-            RFH.SetFieldValue(SceneLoader,"hideTips",false);
-            RFH.SetFieldValue(SceneLoader,"overrideCurtainScene",null!);
-            
-
-            // 注册到场景系统
-            if (MultiSceneCore.MainScene != null && MultiSceneCore.MainScene.HasValue)
-            {
-                SceneManager.MoveGameObjectToScene(teleportPoint, MultiSceneCore.MainScene.Value);
-            }
-            else
-            {
-                Debug.LogError($"{Constant.LogPrefix} 注册到场景系统失败");
-                return false;
-            }
-            // 添加到已创建列表
-            createdTeleportPoint.Add(teleportPoint);
-            return true;
         }
 
         // 创建传送点实例对象
@@ -177,7 +134,7 @@ namespace Add_Custom_Teleport_Point
         }
 
         // 移除所有已创建传送点
-        public static void RemoveCreatedTeleportPoint()
+        public static void removeCreatedTeleportPoint()
         {
             foreach (GameObject teleportPoint in createdTeleportPoint)
             {
@@ -221,14 +178,14 @@ namespace Add_Custom_Teleport_Point
             return true;
         }
 
-        // 场景加载回调，创建传送点
+        // 创建传送点
         // 需要等 MultiSceneCore.ActiveSubSceneID 非空时创建
         // 所以需要注意时间
         // 目前在 LevelManager.OnAfterLevelInitialized
         // 和 MultiSceneCore.OnSubSceneLoaded 时创建
-        public static void Init()
+        public static void StartCreateCustomTeleportPoint()
         {
-            RemoveCreatedTeleportPoint();
+            removeCreatedTeleportPoint();
             if (MultiSceneCore.ActiveSubSceneID == null)
             {
                 Debug.LogWarning($"{Constant.LogPrefix} ActiveSubSceneID 为 null, 无法创建传送点");
@@ -244,5 +201,29 @@ namespace Add_Custom_Teleport_Point
                 }
             }
         }
+
+        // 初始化事件回调函数
+        private static void OnSubSceneLoaded(MultiSceneCore core, Scene scene)
+        {
+            StartCreateCustomTeleportPoint();
+        }
+
+        // 初始化事件回调函数
+        private static void onAfterSceneInitialize(SceneLoadingContext context)
+        {
+            StartCreateCustomTeleportPoint();
+        }
+
+        public static void addCallbackFunc()
+        {
+            MultiSceneCore.OnSubSceneLoaded += OnSubSceneLoaded;
+            SceneLoader.onAfterSceneInitialize += onAfterSceneInitialize;
+        }
+        public static void removeCallbackFunc()
+        {
+            MultiSceneCore.OnSubSceneLoaded -= OnSubSceneLoaded;
+            SceneLoader.onAfterSceneInitialize -= onAfterSceneInitialize;
+        }
+
     }
 }

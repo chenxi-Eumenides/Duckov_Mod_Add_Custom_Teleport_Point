@@ -335,22 +335,51 @@ namespace Add_Custom_Teleport_Point
             }
         }
 
-        public static void PrintEvent()
+        public static void PrintInteractableBaseEvent()
         {
-            Delegate[] RegisteronBeforeSetSceneActive = RFH.GetRegisteredDelegates(typeof(SceneLoader), "onBeforeSetSceneActive");
-            Debug.Log($"Registered in onBeforeSetSceneActive");
-            foreach (Delegate del in RegisteronBeforeSetSceneActive)
+            SceneLoaderProxy[] allSceneLoaderProxys = GameObject.FindObjectsOfType<SceneLoaderProxy>();
+            if (allSceneLoaderProxys == null || allSceneLoaderProxys.Length == 0)
             {
-                Debug.Log($"名称 {del.Method.Name} 类型 {del.Method.DeclaringType?.FullName}");
-                if (del.Target != null)
+                Debug.LogWarning($"not find interactableBase");
+                return;
+            }
+            foreach (var sceneLoaderProxy in allSceneLoaderProxys)
+            {
+                if (sceneLoaderProxy == null) continue;
+                InteractableBase interactableBase = sceneLoaderProxy.gameObject.GetComponent<InteractableBase>();
+                Debug.Log($"{sceneLoaderProxy.gameObject.name} : {interactableBase?.InteractName}");
+                PrintEvent(typeof(InteractableBase), "OnInteractFinishedEvent", interactableBase);
+            }
+        }
+
+        public static void PrintEvent(Type type, string eventName, object? instance = null)
+        {
+            try
+            {
+                Delegate[] delegates = RFH.GetRegisteredDelegates(type, eventName, instance);
+                if (delegates == null || delegates.Length == 0)
                 {
-                    Debug.Log($"对象类型: {del.Target.GetType().FullName}");
-                    var monoBehaviour = del.Target as MonoBehaviour;
-                    if (monoBehaviour != null)
+                    Debug.Log($"{type.Name}.{eventName} 中没有找到任何注册的事件");
+                    return;
+                }
+                Debug.Log($"{type.Name}.{eventName} 中已注册 : {delegates.Length}");
+                foreach (Delegate del in delegates)
+                {
+                    Debug.Log($"  名称 {del.Method.Name} 类型 {del.Method.DeclaringType?.FullName}");
+                    if (del.Target != null)
                     {
-                        Debug.Log($"所在 GameObject: {monoBehaviour.gameObject.name} 标签: {monoBehaviour.gameObject.tag}");
+                        Debug.Log($"  对象类型: {del.Target.GetType().FullName}");
+                        var monoBehaviour = del.Target as MonoBehaviour;
+                        if (monoBehaviour != null)
+                        {
+                            Debug.Log($"    所在 GameObject: {monoBehaviour.gameObject.name} 标签: {monoBehaviour.gameObject.tag}");
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{ex.Message}");
             }
         }
 
@@ -423,19 +452,21 @@ namespace Add_Custom_Teleport_Point
         }
 
         // 测试用
-        // 打印正在交互的物体
-        public static void PrintInteractItem()
+        public static void PrintAllLoadScene()
         {
-            // 获取主玩家实例
-            CharacterMainControl mainCharacter = CharacterMainControl.Main;
-            // 获取当前交互的目标
-            if (mainCharacter != null && mainCharacter.interactAction.Running)
+            SceneLoaderProxy[] allSceneLoaderProxy = GameObject.FindObjectsOfType<SceneLoaderProxy>();
+            foreach (var sceneLoaderProxy in allSceneLoaderProxy)
             {
-                InteractableBase currentInteractTarget = mainCharacter.interactAction.InteractingTarget;
-                if (currentInteractTarget != null)
+                string? sceneID = RFH.GetFieldValue(sceneLoaderProxy, "sceneID") as string;
+                Debug.Log($"{Constant.LogPrefix} SceneLoaderProxy -> {sceneID}");
+                SceneReference? overrideCurtainScene = RFH.GetFieldValue(sceneLoaderProxy, "overrideCurtainScene") as SceneReference;
+                try
                 {
-                    // 当前正在与 currentInteractTarget 交互
-                    Debug.Log($"玩家正在与 {currentInteractTarget.name} 交互");
+                    Debug.Log($"{Constant.LogPrefix}    {overrideCurtainScene?.Name} : {overrideCurtainScene?.BuildIndex}");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"{Constant.LogPrefix}    获取 SceneReference 失败: {ex.Message}");
                 }
             }
         }
@@ -444,6 +475,7 @@ namespace Add_Custom_Teleport_Point
         // 根据出发场景和目标场景，返回中间的加载过场场景
         // 因为 GameplayDataSettings.SceneManagement 中定义的场景，实际都用不到。
         // 实际用到的场景，暂时没找到方式静态获取，也不知道哪里定义的。
+
         // 所以目前该函数没用
         public static SceneReference getLoadScene(string sID, string tID)
         {

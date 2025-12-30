@@ -1,6 +1,8 @@
 # 自定义传送点 Mod
 
-***警告*** 目前模组未完成，本人能力有限，进展缓慢，欢迎有大佬能完善，或给我提供一些帮助。
+## 警告
+
+目前模组未完成，本人能力有限，进展缓慢，欢迎有大佬能完善，或给我提供一些帮助。
 
 ## 项目概述
 
@@ -14,40 +16,41 @@
 - 支持跨地图传送（目前不可用）
 - *可配置传送点名称、位置和交互时间
 - *可配置自动生成返回传送点
+- *支持生成一次性传送点
 
 未来计划
-- 支持生成一次性传送点
 - 支持json配置
 - 支持其他模组调用
-- 支持modsetting模组进行配置
-  - 添加几个内置位置，通过快捷键快捷创造一个当前位置到内置位置的传送点
 
 ## 项目结构
 
 ```
-Add_Custom_TelePort_Point/
-├── ModAssembly/
+Duckov_Add_Custom_Teleport_Point/
+├── ModAssembly/                 # 模组主程序集目录
 │   ├── ModAssembly.csproj       # 项目文件
-│   ├── ModBehaviour.cs          # 模组入口
+│   ├── ModBehaviour.cs          # 模组入口类
 │   ├── TeleporterManager.cs     # 传送点管理器
 │   ├── CustomTeleporter.cs      # 自定义传送组件
-│   ├── ModUtils.cs              # 工具类集合
+│   ├── CustomLocation.cs        # 自定义位置类
+│   ├── DataStructure.cs         # 数据结构定义
 │   ├── Constant.cs              # 常量定义
 │   ├── HarmonyLoader.cs         # Harmony 加载器
-│   └── info.ini                 # 模组信息
-├── README.md                    # 项目说明
-└── .gitignore                   # Git忽略文件
+│   ├── Patch.cs                 # Harmony 补丁类
+│   ├── RFH.cs                   # 反射辅助类
+│   ├── Utils.cs                 # 工具类集合
+│   ├── info.ini                 # 模组信息配置
+│   └── Test.cs                  # 开发测试工具类
+├── README.md                    # 项目说明文档
+└── .gitignore                   # Git 忽略文件配置
 ```
 
 ## 当前问题
 
 1. 跨地图传送功能目前不可用，缺少必要的组件初始化
-  - 使用 `SceneLoader.Instance.LoadScene()` 进行跨地图传送时，`LevelConfig` 没有及时创建
-  - `LevelManager` 无法正确初始化，导致 `LevelManager.LootBoxInventories` 和 `LootBoxInventoriesParent` 获取失败
-  - `TimeOfDayController` 未及时创建，属性没有正确初始化,出现Start()、Update()空指针异常
-  - `GetQuestPrefab` 未正确设置，可能有影响
-
-2. 传送点配置硬编码在`registerCustomConfig()`中，打算未来支持json配置
+  - 使用 `SceneLoader.Instance.LoadScene()` 进行跨地图传送时，
+    - `LevelConfig` 没有及时创建，`LevelManager` 无法正确初始化，导致 `LevelManager.LootBoxInventories` 和 `LootBoxInventoriesParent` 获取失败。
+    - `TimeOfDayController` 未及时创建，属性没有正确初始化,出现Start()、Update()空指针异常
+    - `GetQuestPrefab` 未正确设置，可能有影响
 
 ## 致谢
 

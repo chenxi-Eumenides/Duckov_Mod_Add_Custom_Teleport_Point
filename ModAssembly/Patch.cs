@@ -49,7 +49,9 @@ namespace Add_Custom_Teleport_Point
         static bool Prefix(ref InteractableBase __instance)
         {
             // 增加 otherInterablesInGroup 为null的检测，防止报错。
-            if (__instance.gameObject.name.StartsWith($"{Constant.CustomTeleporterPrefix}_"))
+            if (__instance.gameObject.name.StartsWith($"{Constant.CustomTeleporterPrefix}_")
+                // || __instance.gameObject.name.EndsWith("_test")
+            )
             {
                 Vector3 vector = __instance.transform.position * 10f;
                 int x = Mathf.RoundToInt(vector.x);
@@ -90,6 +92,13 @@ namespace Add_Custom_Teleport_Point
                 }
                 RFH.SetFieldValue(__instance, "_interactbleList", new List<InteractableBase>());
                 return false; // 跳过原游戏实现
+            }
+            else if (__instance.gameObject.name.EndsWith("_test"))
+            {
+                var otherInterablesInGroup = RFH.GetFieldValue(__instance, "otherInterablesInGroup") as InteractableBase[];
+                Debug.Log($"{Constant.LogPrefix} {__instance.gameObject.name} : {otherInterablesInGroup?.Length}");
+                RFH.SetFieldValue(__instance, "otherInterablesInGroup", new List<InteractableBase>());
+                return true; // 继续执行原方法
             }
             return true; // 继续执行原方法
         }
@@ -133,25 +142,29 @@ namespace Add_Custom_Teleport_Point
             if (LevelConfig.Instance == null)
             {
                 Debug.LogError($"{Constant.LogPrefix} LevelConfig没有实例化，Object.FindFirstObjectByType<LevelConfig>()返回null");
+                // return false; // 跳过原游戏实现
             }
             if (LevelManager.Instance == null)
             {
                 Debug.LogError($"{Constant.LogPrefix} LevelManager没有实例化，Object.FindFirstObjectByType<LevelManager>()返回null");
+                // return false; // 跳过原游戏实现
             }
             if (LevelManager.LootBoxInventories == null)
             {
                 Debug.LogError($"{Constant.LogPrefix} LootBoxInventories 为 null");
+                // return false; // 跳过原游戏实现
             }
             if (LevelManager.LootBoxInventoriesParent == null)
             {
                 Debug.LogError($"{Constant.LogPrefix} LootBoxInventoriesParent 为 null");
+                // return false; // 跳过原游戏实现
             }
             return true; // 继续原游戏实现
         }
         [HarmonyPostfix]
         static void Postfix(ref Inventory __result)
         {
-            Debug.Log($"{Constant.LogPrefix} GetOrCreateInventory 结束");
+            // Debug.Log($"{Constant.LogPrefix} GetOrCreateInventory 结束");
         }
     }
 
@@ -173,11 +186,11 @@ namespace Add_Custom_Teleport_Point
             ref UniTask __result
         )
         {
-            Debug.Log($"{Constant.LogPrefix} SceneLoader.LoadScene 开始运行。");
-            var dcs = __instance.defaultCurtainScene;
-            Debug.Log($"{Constant.LogPrefix} defaultCurtainScene ：{dcs.Name} {dcs.Path} {dcs.BuildIndex}");
-            var cs = overrideCurtainScene;
-            Debug.Log($"{Constant.LogPrefix} overrideCurtainScene ：{cs?.Name} {cs?.Path} {cs?.BuildIndex}");
+            // Debug.Log($"{Constant.LogPrefix} SceneLoader.LoadScene 开始运行。");
+            // var dcs = __instance.defaultCurtainScene;
+            // Debug.Log($"{Constant.LogPrefix} defaultCurtainScene ：{dcs.Name} {dcs.Path} {dcs.BuildIndex}");
+            // var cs = overrideCurtainScene;
+            // Debug.Log($"{Constant.LogPrefix} overrideCurtainScene ：{cs?.Name} {cs?.Path} {cs?.BuildIndex}");
 
             return true; // 执行原游戏实现
         }
@@ -201,17 +214,19 @@ namespace Add_Custom_Teleport_Point
         [HarmonyPrefix]
         static bool Prefix(ref SceneLoaderProxy __instance)
         {
-            Debug.Log($"{Constant.LogPrefix} SceneLoaderProxy.LoadScene 开始运行。");
+            // Debug.Log($"{Constant.LogPrefix} SceneLoaderProxy.LoadScene 开始运行。");
 
-            if (SceneLoader.Instance == null)
-            {
-                Debug.LogWarning($"{Constant.LogPrefix} 没找到SceneLoader实例，已取消加载场景");
-                return false; // 跳过原游戏实现
-            }
-            InputManager.DisableInput(__instance.gameObject);
-            RFH.InvokePrivateMethodUniTask(__instance, "Task").Forget();
+            // if (SceneLoader.Instance == null)
+            // {
+            //     Debug.LogWarning($"{Constant.LogPrefix} 没找到SceneLoader实例，已取消加载场景");
+            //     return false; // 跳过原游戏实现
+            // }
+            // InputManager.DisableInput(__instance.gameObject);
+            // RFH.InvokePrivateMethodUniTask(__instance, "Task").Forget();
 
-            return false; // 跳过原游戏实现
+            // return false; // 跳过原游戏实现
+
+            return true; // 执行原游戏实现
         }
     }
 }

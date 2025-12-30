@@ -13,11 +13,11 @@ namespace Add_Custom_Teleport_Point
     // InvokePrivateMethod 执行私有函数
     public static class RFH
     {
-        public static Delegate[] GetRegisteredDelegates(Type type, string eventName)
+        public static Delegate[] GetRegisteredDelegates(Type type, string eventName,object? instance = null)
         {
             FieldInfo field = type.GetField(eventName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
             if (field == null) return new Delegate[0];
-            var eventDelegate = field.GetValue(null) as Delegate;
+            var eventDelegate = field.GetValue(instance) as Delegate;
             if (eventDelegate == null) return new Delegate[0];
             return eventDelegate.GetInvocationList();
         }
