@@ -30,13 +30,11 @@ namespace Add_Custom_Teleport_Point
             }
             HarmonyLoader.OnReadyToPatch += () =>
             {
-                Debug.Log($"{Constant.LogPrefix} Harmony patch all");
                 HarmonyLoader.PatchAll(typeof(ModBehaviour).Assembly);
                 InvokeModEntryMethod("Initialize");
             };
 
             Debug.Log($"{Constant.LogPrefix} Harmony Initialized Successfully");
-            Debug.Log($"{Constant.LogPrefix} Triggering ReadyToPatch Event");
             ReadyToPatch();
         }
 
@@ -44,7 +42,6 @@ namespace Add_Custom_Teleport_Point
         {
             if (_harmonyInstance == null) return;
 
-            Debug.Log($"{Constant.LogPrefix} _harmonyInstance : {_harmonyInstance} _isInitialized : {_isInitialized}");
             if (!UnpatchAll())
             {
                 Debug.LogError($"{Constant.LogPrefix} Failed to unpatch Harmony patches during uninitialization.");
@@ -121,7 +118,6 @@ namespace Add_Custom_Teleport_Point
 
         public static void ReadyToPatch()
         {
-            Debug.Log($"{Constant.LogPrefix} Harmony start Patch");
             _isInitialized = true;
             OnReadyToPatch?.Invoke();
         }
@@ -129,11 +125,9 @@ namespace Add_Custom_Teleport_Point
         public static void OnModActivated(ModInfo modInfo, Duckov.Modding.ModBehaviour modBehaviour)
         {
             if (modBehaviour.GetType().Assembly == typeof(HarmonyLoader).Assembly) return;
-            Debug.Log($"{Constant.LogPrefix} Mod Activated: {modInfo.name}. Attempting to initialize Harmony again.");
 
             if (!LoadHarmony()) return;
 
-            Debug.Log($"{Constant.LogPrefix} Harmony Initialized Successfully on Mod Activation");
             UnregisterModActivatedEvents();
             ReadyToPatch();
         }
@@ -183,8 +177,6 @@ namespace Add_Custom_Teleport_Point
 
                 try
                 {
-                    Debug.Log($"{Constant.LogPrefix} Loading Assembly from: {targetAssemblyFile}");
-
                     var bytes = File.ReadAllBytes(targetAssemblyFile);
                     var targetAssembly = Assembly.Load(bytes);
                     harmonyAssembly = targetAssembly;
