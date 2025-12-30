@@ -62,6 +62,9 @@
         <Copy SourceFiles="$(ProjectDir)/config.json"
               DestinationFolder="$(OutputCopyDir)"
               SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(ProjectDir)/preview.png"
+              DestinationFolder="$(OutputCopyDir)"
+              SkipUnchangedFiles="true" />
     </Target>
     <Target Name="CleanOutputFolder" BeforeTargets="Clean">
         <RemoveDir Directories="$(OutputCopyDir)" />
