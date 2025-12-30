@@ -8,7 +8,14 @@ namespace Add_Custom_Teleport_Point
     // 一些工具函数
     public static class Utils
     {
-        // 根据子场景名称获取主场景名称，主要用于判断是否属于统一关卡
+        /// <summary>
+        /// 根据子场景名称获取主场景名称
+        /// </summary>
+        /// <param name="sceneID">子场景ID</param>
+        /// <returns>对应的主场景名称，如果未找到则返回null</returns>
+        /// <remarks>
+        /// 主要用于判断是否属于同一关卡
+        /// </remarks>
         public static string? getMainScene(string sceneID)
         {
             return sceneID switch

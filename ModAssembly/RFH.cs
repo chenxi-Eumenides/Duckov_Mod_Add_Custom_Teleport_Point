@@ -21,16 +21,17 @@ namespace Add_Custom_Teleport_Point
             if (eventDelegate == null) return new Delegate[0];
             return eventDelegate.GetInvocationList();
         }
+        
         public static FieldInfo GetPrivateField(Type type, string fieldName)
         {
             return type.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         }
-
+        
         public static PropertyInfo GetPrivateProperty(Type type, string propertyName)
         {
             return type.GetProperty(propertyName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
         }
-
+        
         public static MethodInfo GetPrivateMethod(Type type, string methodName)
         {
             return type.GetMethod(methodName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);

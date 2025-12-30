@@ -24,14 +24,23 @@ namespace Add_Custom_Teleport_Point
         public Vector3 markerOffset = Vector3.up * 1f;
         public float teleportCooldown = 1f;
         public string displayName => InteractName;
-        public bool isCrossLevel => targetSceneInfo.mainSceneID != sourceSceneInfo.mainSceneID;
+        public bool isCrossLevel => targetSceneInfo.MainSceneID != sourceSceneInfo.MainSceneID;
         public bool isCrossSubScene => targetSceneInfo.SceneID != sourceSceneInfo.SceneID;
         public bool Disposable = false;
 
         public static bool IsTeleporting => isTeleporting;
         public static float LastTeleportTime => lastTeleportTime;
 
-        // 初始化，设置属性
+        /// <summary>
+        /// 初始化自定义传送点组件，设置所有必要属性
+        /// </summary>
+        /// <param name="index">传送点的唯一标识符</param>
+        /// <param name="displayContext">显示名称的本地化上下文列表，至少包含2个元素时使用第一个作为UI显示名称</param>
+        /// <param name="sourceSceneID">源场景ID</param>
+        /// <param name="sourcePosition">源位置坐标</param>
+        /// <param name="targetSceneID">目标场景ID</param>
+        /// <param name="targetPosition">目标位置坐标</param>
+        /// <param name="disposable">是否为一次性传送点（使用后销毁）</param>
         public void Initialize(int index, List<string> displayContext,
             string sourceSceneID, Vector3 sourcePosition,
             string targetSceneID, Vector3 targetPosition,
@@ -79,7 +88,7 @@ namespace Add_Custom_Teleport_Point
             Disposable=disposable;
 
             // 设置外观，模拟simple teleporter组件
-            // 不生效
+            // 未完全生效
             GameObject r = new GameObject("r");
             r.transform.SetParent(gameObject.transform);
             r.transform.localPosition = Vector3.up;
@@ -119,6 +128,16 @@ namespace Add_Custom_Teleport_Point
             isInitialized = true;
             Awake();
         }
+        /// <summary>
+        /// 初始化自定义传送点组件（简化版本）
+        /// </summary>
+        /// <param name="index">传送点的唯一标识符</param>
+        /// <param name="displayContext">显示名称</param>
+        /// <param name="sourceSceneID">源场景ID</param>
+        /// <param name="sourcePosition">源位置坐标</param>
+        /// <param name="targetSceneID">目标场景ID</param>
+        /// <param name="targetPosition">目标位置坐标</param>
+        /// <param name="disposable">是否为一次性传送点（使用后销毁）</param>
         public void Initialize(int index, string displayContext,
             string sourceSceneID, Vector3 sourcePosition,
             string targetSceneID, Vector3 targetPosition,
@@ -127,66 +146,81 @@ namespace Add_Custom_Teleport_Point
             Initialize(index, new List<string> { displayContext, displayContext }, sourceSceneID, sourcePosition, targetSceneID, targetPosition, disposable);
         }
 
-        // 先初始化，再Awake
-        // InteractableBase 的 Awake 有可能需要某些属性，否则会报错
-        // 所以延后 Awake 的事件
+        /// <summary>
+        /// 重写Awake方法，确保在初始化完成后才执行基类Awake
+        /// </summary>
+        /// <remarks>
+        /// InteractableBase的Awake方法可能需要某些属性，否则会报错
+        /// 因此延后Awake的执行，直到初始化完成
+        /// </remarks>
         protected override void Awake()
         {
             if (!isInitialized) return;
             base.Awake();
         }
 
-        // 交互开始时的处理
+        /// <summary>
+        /// 当交互开始时调用，设置交互冷却时间和行为
+        /// </summary>
+        /// <param name="character">触发交互的角色</param>
         protected override void OnInteractStart(CharacterMainControl character)
         {
             // 设置交互时间和行为
             coolTime = 2f;
             finishWhenTimeOut = true;
-            // registerCallFuncs();
-            // Test.PrintInteractableBaseEvent();
         }
 
-        // 交互完成时的处理
+        /// <summary>
+        /// 当交互完成时调用，执行传送逻辑
+        /// </summary>
+        /// <remarks>
+        /// 处理传送逻辑，包括跨关卡、同关卡和同场景传送
+        /// 如果是一次性传送点，使用后会被销毁
+        /// </remarks>
         protected override void OnInteractFinished()
         {
             if (isTeleporting && isValidTeleporter() && !SceneLoader.IsSceneLoading) return;
 
             isTeleporting = true;
             lastTeleportTime = Time.time;
-            if (Disposable) TeleporterManager.CancelTeleportPointConfig(ID);
+            if (Disposable) TeleporterManager.UnRegisterTeleportPointConfig(ID);
 
             try
             {
-                Teleport(sourceSceneInfo, targetSceneInfo);
+                teleport(sourceSceneInfo, targetSceneInfo);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Constant.LogPrefix} 传送失败: {ex.Message}");
-                Debug.LogError($"{Constant.LogPrefix} 调用栈: {ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} 传送失败: {ex.Message}/n{ex.StackTrace}");
             }
             isTeleporting = false;
             StopInteract();
             if (Disposable) Destroy(gameObject);
         }
 
-        // 交互停止时的处理
+        /// <summary>
+        /// 当交互停止时调用，清理交互状态
+        /// </summary>
         protected override void OnInteractStop()
         {
             // 清理状态，允许重新交互
             finishWhenTimeOut = false;
-            // cancelRegisterCallFuncs();
         }
 
-        // 销毁时的处理
+        /// <summary>
+        /// 当组件销毁时调用，清理状态
+        /// </summary>
         protected override void OnDestroy()
         {
             isInitialized = false;
             MarkerActive = false;
             GetComponent<BoxCollider>().enabled = true;
-            // cancelRegisterCallFuncs();
         }
 
-        // 验证是否传传送点有效
+        /// <summary>
+        /// 验证传送点是否有效
+        /// </summary>
+        /// <returns>如果传送点已初始化且源场景和目标场景都有效，则返回true</returns>
         public bool isValidTeleporter()
         {
             return isInitialized &&
@@ -194,7 +228,13 @@ namespace Add_Custom_Teleport_Point
                 targetSceneInfo.IsValid;
         }
 
-        // 重写交互条件检查 - 确保在可传送状态下才能交互
+        /// <summary>
+        /// 重写交互条件检查，确保在可传送状态下才能交互
+        /// </summary>
+        /// <returns>如果满足所有交互条件则返回true</returns>
+        /// <remarks>
+        /// 检查条件包括：不在传送中、冷却时间已过、场景未加载、传送点有效
+        /// </remarks>
         protected override bool IsInteractable()
         {
             return !isTeleporting &&
@@ -203,25 +243,25 @@ namespace Add_Custom_Teleport_Point
                    isValidTeleporter();
         }
 
-        // 核心传送处理
-        private void Teleport(SceneInfo sourceSceneInfo, SceneInfo targetSceneInfo)
+        /// <summary>
+        /// 核心传送处理逻辑
+        /// </summary>
+        /// <param name="sourceSceneInfo">源场景信息</param>
+        /// <param name="targetSceneInfo">目标场景信息</param>
+        /// <remarks>
+        /// 根据源场景和目标场景的关系，执行不同的传送逻辑：
+        /// 1. 不同主场景：跨关卡传送
+        /// 2. 相同主场景不同子场景：同关卡传送
+        /// 3. 相同子场景：直接设置玩家位置
+        /// </remarks>
+        private void teleport(SceneInfo sourceSceneInfo, SceneInfo targetSceneInfo)
         {
-            if (sourceSceneInfo.mainSceneID != targetSceneInfo.mainSceneID)
+            if (sourceSceneInfo.MainSceneID != targetSceneInfo.MainSceneID)
             {
                 // 不同主场景，进行跨关卡传送
-                // 先执行 SceneLoader.LoadScene
-                // 再创建 LevelManager
-                // 此时 LevelManager 会根据 SceneLoader.IsSceneLoading
-                // 执行 InitLevel 或在 onFinishedLoadingScene 阶段执行
-                // 目前不可用，缺少必要的组件或属性
-                // 目前已知问题：
-                // 1. LevelConfig 没有及时创建，导致 LevelManager 没有创建，
-                // 导致lootbox获取 LevelManager.LootBoxInventories 和 LootBoxInventoriesParent 失败
-                // 2. TimeOfDayController 未及时创建，报空指针、空对象，还未找具体是哪行代码导致的
-                // TimeOfDayController 可能需要 TimeOfDayConfig
                 InputManager.DisableInput(base.gameObject);
                 SceneLoader.Instance.LoadScene(
-                    sceneReference: targetSceneInfo.SceneReference,
+                    sceneReference: targetSceneInfo.MainSceneReference,
                     // overrideCurtainScene: GameplayDataSettings.SceneManagement.PrologueScene,
                     location: targetSceneInfo.Location,
                     useLocation: targetSceneInfo.useLocation,
@@ -238,7 +278,6 @@ namespace Add_Custom_Teleport_Point
                 // 可以传送到相同主场景下的子场景
                 // 比如 零号区是 Level_GroundZero_main 下的 Level_GroundZero_1
                 // 零号区山洞是 Level_GroundZero_main 下的 Level_GroundZero_Cave
-                // 目前可以正常运行，没有问题
                 MultiSceneCore.Instance.LoadAndTeleport(targetSceneInfo.Location).Forget();
             }
             else

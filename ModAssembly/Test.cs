@@ -384,6 +384,38 @@ namespace Add_Custom_Teleport_Point
         }
 
         // 测试用
+        public static void PrintLevelManager()
+        {
+            LevelConfig levelConfig = UnityEngine.Object.FindFirstObjectByType<LevelConfig>();
+            if (levelConfig != null)
+            {
+                Debug.Log($"LevelConfig:{levelConfig.gameObject.name} parent:{levelConfig.transform.parent?.name}");
+                Debug.Log($"  LootBoxQualityLowPercent:{levelConfig.LootBoxQualityLowPercent} LootboxItemCountMultiplier:{levelConfig.LootboxItemCountMultiplier}");
+                Debug.Log($"  isBaseLevel:{RFH.GetFieldValue(levelConfig,"isBaseLevel")} isRaidMap:{RFH.GetFieldValue(levelConfig,"isRaidMap")}");
+                Debug.Log($"  minExitCount:{RFH.GetFieldValue(levelConfig,"minExitCount")} maxExitCount:{RFH.GetFieldValue(levelConfig,"maxExitCount")}");
+                Debug.Log($"  spawnTomb:{RFH.GetFieldValue(levelConfig,"spawnTomb")}");
+            }
+
+            LevelManager levelManager = UnityEngine.Object.FindFirstObjectByType<LevelManager>();
+            if (levelManager != null)
+            {
+                Debug.Log($"LevelManager:{levelManager.gameObject.name} parent:{levelManager.transform.parent?.name}");
+                FogOfWarManager fogOfWarManager = levelManager.FogOfWarManager;
+                if (fogOfWarManager != null)
+                {
+                    Debug.Log($"FogOfWarManager:{fogOfWarManager.gameObject.name} parent:{fogOfWarManager.transform.parent?.name}");
+                    Debug.Log($"  viewAgnel:{RFH.GetFieldValue(fogOfWarManager,"viewAgnel")} senseRange:{RFH.GetFieldValue(fogOfWarManager,"senseRange")} viewDistance:{RFH.GetFieldValue(fogOfWarManager,"viewDistance")}");
+                }
+                TimeOfDayController timeOfDayController = levelManager.TimeOfDayController;
+                if (timeOfDayController != null)
+                {
+                    Debug.Log($"TimeOfDayController:{timeOfDayController.gameObject.name} parent:{timeOfDayController.transform.parent?.name}");
+                    Debug.Log($"  config:{RFH.GetFieldValue(timeOfDayController,"config")} Time:{timeOfDayController.Time}");
+                }
+            }
+        }
+
+        // 测试用
         public static void CheckLootBox()
         {
             var lootboxs = GameObject.FindObjectsOfType<InteractableLootbox>();
@@ -475,8 +507,6 @@ namespace Add_Custom_Teleport_Point
         // 根据出发场景和目标场景，返回中间的加载过场场景
         // 因为 GameplayDataSettings.SceneManagement 中定义的场景，实际都用不到。
         // 实际用到的场景，暂时没找到方式静态获取，也不知道哪里定义的。
-
-        // 所以目前该函数没用
         public static SceneReference getLoadScene(string sID, string tID)
         {
             var baseScene = GameplayDataSettings.SceneManagement.BaseScene;
