@@ -1,52 +1,32 @@
 [
     {
-        "sourceSceneId": "Base_SceneV2",
+        "sourceSceneId": "Level_JLab_1",
         "sourcePosition": [
-            -5.0,
+            -92.0,
             0.0,
-            -85.0
+            -134.0
         ],
-        "targetSceneId": "Base_SceneV2_2",
+        "targetSceneId": "Level_Farm_01",
         "targetPosition": [
-            95.0,
-            0.0,
-            -40.0
+            482.0,
+            1.5,
+            501.9
         ],
-        "interactName": "同地图传送",
-        "interactTime": 0.5,
-        "backTeleport": true
+        "interactName": "前往零号区"
     },
     {
-        "sourceSceneId": "Base_SceneV2",
+        "sourceSceneId": "Level_JLab_1",
         "sourcePosition": [
-            -3.0,
-            0.0,
-            -85.0
+            -152.5,
+            1.0,
+            122.8
         ],
         "targetSceneId": "Level_GroundZero_1",
         "targetPosition": [
-            322.0,
-            0.0,
-            185.0
+            415.2,
+            4.0,
+            169.5
         ],
-        "interactName": "跨地图传送-零号区",
-        "backTeleport": true
-    },
-    {
-        "sourceSceneId": "Base_SceneV2",
-        "sourcePosition": [
-            -7.0,
-            0.0,
-            -85.0
-        ],
-        "targetSceneId": "Level_Farm_JLab_Facility",
-        "targetPosition": [
-            910.0,
-            0.0,
-            600.0
-        ],
-        "interactName": "跨地图传送-农场镇JLab",
-        "backTeleport": true,
-        "disposable": true
+        "interactName": "返回农场镇"
     }
 ]

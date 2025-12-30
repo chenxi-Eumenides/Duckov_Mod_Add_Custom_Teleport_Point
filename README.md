@@ -6,9 +6,9 @@
 
 默认为游戏添加2个传送点。
 
-一个用于到达农场镇，用于在找不到二级卡时，能够不回家，重新进入J-Lab实验室；
+一个从J-Lab一层到农场镇，用于在找不到二级卡时，能够不回家重新进入J-Lab；
 
-另一个用于在打败boss后到达零号区，能够不回家进入风暴区。
+另一个从J-Lab的BOSS房到零号区，用于在打败boss后，能够不回家进入风暴区。
 
 ### 主要功能
 
@@ -24,6 +24,7 @@
 
 - 生成类似游戏本身传送点的外观
 - 支持其他模组调用
+- 支持加载撤离收获统计
 
 ## 项目结构
 
@@ -47,11 +48,12 @@ Duckov_Add_Custom_Teleport_Point/
 └── .gitignore
 ```
 
-## 开发说明
+## 配置说明
 
 注册传送点配置
 
 ```csharp
+// csharp代码
 TeleporterManager.registerTeleportPoint(
     sourceSceneId: Constant.SCENE_ID_BASE,      // 在该子场景下创建传送点
     sourcePosition: new Vector3(-5f, 0f, -85f), // 在该坐标创建传送点
@@ -63,7 +65,23 @@ TeleporterManager.registerTeleportPoint(
 );
 ```
 
-### 游戏代码研究
+```json
+// json
+[
+    {
+        "sourceSceneId": "Base_SceneV2",
+        "sourcePosition": [ -5.0, 0.0, -85.0 ],
+        "targetSceneId": "Level_JLab_1",
+        "targetPosition": [ -152.5, 1.0, 125.8 ],
+        "interactName": "测试用",
+        "backTeleport": true,
+        "disposable": true
+    },
+    // ...
+]
+```
+
+## 游戏代码研究
 
 跨主场景使用`SceneLoader.Instance.LoadScene`函数。sceneReference参数需要是目标主场景的scene对象，location中需要是目标子场景的sceneid。
 
@@ -86,8 +104,6 @@ TeleporterManager.registerTeleportPoint(
 - `MultiSceneCore.LoadAndTeleport` 加载顺序为
   1. *`MultiSceneCore.OnSubSceneWillBeUnloaded`
   2. `MultiSceneCore.OnSubSceneLoaded`
-
-
 
 ## 致谢
 

@@ -27,6 +27,7 @@ namespace Add_Custom_Teleport_Point
         public bool IsValid => isValid;
         public SceneReference? SceneReference => scene != null ? scene.SceneReference : null;
         public SceneReference? MainSceneReference => mainScene != null ? mainScene.SceneReference : null;
+        public SceneReference? overrideCurtainScene = null;
         public string? MainSceneID => mainSceneID;
 
         public bool useLocation = true;
@@ -54,10 +55,6 @@ namespace Add_Custom_Teleport_Point
                 SceneID = sceneID,
                 LocationName = locationName
             };
-            if ("Base" == sceneID)
-            {
-                saveToFile = true;
-            }
             isValid = CheckInfo();
             CustomLocation.AddCustomLocation(sceneID, locationName, position);
         }
@@ -85,9 +82,9 @@ namespace Add_Custom_Teleport_Point
     {
         public int configID = -1;
         public string sourceSceneId = "";
-        public float[] sourcePosition = [0f,0f,0f];
+        public float[] sourcePosition = [0f, 0f, 0f];
         public string targetSceneId = "";
-        public float[] targetPosition = [0f,0f,0f];
+        public float[] targetPosition = [0f, 0f, 0f];
         public string interactName = Constant.DEFAULT_INTERACT_NAME;
         public float interactTime = Constant.DEFAULT_INTERACT_TIME;
         public bool disposable = false;

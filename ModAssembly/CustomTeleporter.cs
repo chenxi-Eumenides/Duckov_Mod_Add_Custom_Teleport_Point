@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Duckov.Scenes;
+using Duckov.Utilities;
 
 namespace Add_Custom_Teleport_Point
 {
@@ -52,6 +53,12 @@ namespace Add_Custom_Teleport_Point
             // 设置传送点信息
             sourceSceneInfo = new SceneInfo(sourceSceneID, sourcePosition, $"{Constant.CustomTeleporterPrefix}_{index}_source");
             targetSceneInfo = new SceneInfo(targetSceneID, targetPosition + Vector3.up * 0.2f, $"{Constant.CustomTeleporterPrefix}_{index}_target");
+            if (sourceSceneInfo.MainSceneID != targetSceneInfo.MainSceneID && targetSceneInfo.MainSceneID == Constant.MAIN_SCENE_ID_BASE)
+            {
+                targetSceneInfo.notifyEvacuation = true;
+                targetSceneInfo.saveToFile = true;
+                targetSceneInfo.overrideCurtainScene = GameplayDataSettings.SceneManagement.EvacuateScreenScene;
+            }
 
             // 设置交互显示名称和本地化
             string UI_context = Constant.DEFAULT_INTERACT_NAME;
@@ -258,10 +265,10 @@ namespace Add_Custom_Teleport_Point
             if (sourceSceneInfo.MainSceneID != targetSceneInfo.MainSceneID)
             {
                 // 不同主场景，进行跨关卡传送
-                InputManager.DisableInput(base.gameObject);
+                // InputManager.DisableInput(base.gameObject);
                 SceneLoader.Instance.LoadScene(
                     sceneReference: targetSceneInfo.MainSceneReference,
-                    // overrideCurtainScene: GameplayDataSettings.SceneManagement.PrologueScene,
+                    overrideCurtainScene: targetSceneInfo.overrideCurtainScene,
                     location: targetSceneInfo.Location,
                     useLocation: targetSceneInfo.useLocation,
                     clickToConinue: targetSceneInfo.clickToConinue,
