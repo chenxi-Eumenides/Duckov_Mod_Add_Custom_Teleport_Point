@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Duckov.Scenes;
-using Duckov.Utilities;
 
 namespace Add_Custom_Teleport_Point
 {
@@ -191,7 +190,7 @@ namespace Add_Custom_Teleport_Point
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Constant.LogPrefix} 传送失败: {ex.Message}/n{ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} 传送失败: {ex.Message}\n{ex.StackTrace}");
             }
             isTeleporting = false;
             StopInteract();

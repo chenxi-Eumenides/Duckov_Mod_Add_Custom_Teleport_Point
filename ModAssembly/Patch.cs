@@ -67,7 +67,7 @@ namespace Add_Custom_Teleport_Point
                 {
                     __instance.interactCollider.gameObject.layer = LayerMask.NameToLayer("Interactable");
                 }
-                var otherInterablesInGroup = RFH.GetFieldValue(__instance, "otherInterablesInGroup") as InteractableBase[];
+                List<InteractableBase>? otherInterablesInGroup = RFH.GetFieldValue(__instance, "otherInterablesInGroup") as List<InteractableBase>;
                 if (otherInterablesInGroup != null)
                 {
                     foreach (InteractableBase item in otherInterablesInGroup)
