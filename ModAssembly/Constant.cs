@@ -7,6 +7,8 @@ namespace Add_Custom_Teleport_Point
         public const string HarmonyId = "com.chenxi-Eumenides.Add_Custom_Teleport_Point";
         public const string LogPrefix = $"[{ModName}]";
 
+        public const string ConfigJsonName = "config.json";
+
         public const string CustomLocationPrefix = "CustomLocation";
         public const string CustomTeleporterPrefix = "CustomTeleporter";
 

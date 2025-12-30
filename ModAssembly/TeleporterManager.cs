@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Duckov.Scenes;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace Add_Custom_Teleport_Point
 {
@@ -31,15 +33,17 @@ namespace Add_Custom_Teleport_Point
                     Debug.LogWarning($"{Constant.LogPrefix} 传入的config({config?.interactName})未注册");
                     return false;
                 }
+                Vector3 sourcePos = new Vector3(config.sourcePosition[0], config.sourcePosition[1], config.sourcePosition[2]);
+                Vector3 targetPos = new Vector3(config.targetPosition[0], config.targetPosition[1], config.targetPosition[2]);
                 // 创建空游戏对象
                 GameObject teleportPoint = new GameObject();
-                teleportPoint.transform.position = config.sourcePosition;
+                teleportPoint.transform.position = sourcePos;
                 // 添加自定义传送点组件并初始化
                 CustomTeleporter CustomTeleporter = teleportPoint.AddComponent<CustomTeleporter>();
                 CustomTeleporter.Initialize(
                     config.configID, config.interactName,
-                    config.sourceSceneId, config.sourcePosition,
-                    config.targetSceneId, config.targetPosition,
+                    config.sourceSceneId, sourcePos,
+                    config.targetSceneId, targetPos,
                     disposable: config.disposable
                 );
                 // 检查传送点配置是否有效
@@ -63,12 +67,12 @@ namespace Add_Custom_Teleport_Point
                 // 添加到已创建列表
                 createdTeleportPoints.Add(teleportPoint);
 
-                Debug.Log($"{Constant.LogPrefix} 创建成功！传送点 TeleportPoint_{config.configID}: {config.sourceSceneId}({config.sourcePosition}) => {config.targetSceneId}({config.targetPosition})");
+                Debug.Log($"{Constant.LogPrefix} 创建成功！传送点 TeleportPoint_{config.configID}: {config.sourceSceneId}({sourcePos}) => {config.targetSceneId}({targetPos})");
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Constant.LogPrefix} 创建传送点({config.interactName})时发生异常: {ex.Message}/n{ex.StackTrace}");
+                Debug.LogError($"{Constant.LogPrefix} 创建传送点({config.interactName})时发生异常: {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
         }
@@ -86,8 +90,8 @@ namespace Add_Custom_Teleport_Point
         /// <param name="disposable">是否为一次性传送点</param>
         /// <returns>成功注册的传送点数量（正向+反向）</returns>
         public static int RegisterTeleportPointConfig(
-            string sourceSceneId, Vector3 sourcePosition,
-            string targetSceneId, Vector3 targetPosition,
+            string sourceSceneId, float[] sourcePosition,
+            string targetSceneId, float[] targetPosition,
             string interactName = Constant.DEFAULT_INTERACT_NAME,
             float interactTime = Constant.DEFAULT_INTERACT_TIME,
             bool backTeleport = false,
@@ -184,15 +188,18 @@ namespace Add_Custom_Teleport_Point
         /// <returns>如果配置有效且不重复则返回true</returns>
         private static bool isVaildConfig(TeleportConfig checkConfig)
         {
+            // 检查必要字段
             if (string.IsNullOrEmpty(checkConfig.sourceSceneId)) return false;
             if (string.IsNullOrEmpty(checkConfig.targetSceneId)) return false;
+            if (checkConfig.sourcePosition == null || checkConfig.sourcePosition.Length != 3) return false;
+            if (checkConfig.targetPosition == null || checkConfig.targetPosition.Length != 3) return false;
+            if (checkConfig.backTeleport) return false;
+            // 检查是否重复注册
             foreach (var config in registeredConfigs)
             {
                 if (
                     checkConfig.sourceSceneId == config.sourceSceneId &&
-                    checkConfig.sourcePosition == config.sourcePosition &&
-                    checkConfig.targetSceneId == config.targetSceneId &&
-                    checkConfig.targetPosition == config.targetPosition
+                    checkConfig.sourcePosition == config.sourcePosition
                 ) return false;
             }
             return true;
@@ -224,9 +231,63 @@ namespace Add_Custom_Teleport_Point
             }
         }
 
-        private static void readConfigFromJson()
+        /// <summary>
+        /// 从 JSON 文件读取传送点配置并注册
+        /// </summary>
+        /// <param name="filePath">JSON 文件路径，如果为 null 则使用默认路径</param>
+        public static void readConfigFromJson()
         {
+            try
+            {
+                string filePath = Path.Combine(Duckov.Modding.ModManager.DefaultModFolderPath,Constant.ModId, Constant.ConfigJsonName);
+                if (!File.Exists(filePath))
+                {
+                    Debug.LogWarning($"{Constant.LogPrefix} JSON 配置文件不存在: {filePath} 跳过读取。");
+                    return;
+                }
 
+                string jsonContent = File.ReadAllText(filePath);
+                var jsonConfigs = JsonConvert.DeserializeObject<List<TeleportConfig>>(jsonContent);
+
+                if (jsonConfigs == null || jsonConfigs.Count == 0)
+                {
+                    Debug.LogWarning($"{Constant.LogPrefix} JSON 配置文件为空或格式错误");
+                    return;
+                }
+
+                int successCount = 0;
+                foreach (var jsonConfig in jsonConfigs)
+                {
+                    // 验证必要字段
+                    if (string.IsNullOrEmpty(jsonConfig.sourceSceneId) ||
+                        string.IsNullOrEmpty(jsonConfig.targetSceneId) ||
+                        jsonConfig.sourcePosition == null || jsonConfig.sourcePosition.Length != 3 ||
+                        jsonConfig.targetPosition == null || jsonConfig.targetPosition.Length != 3)
+                    {
+                        Debug.LogWarning($"{Constant.LogPrefix} 跳过无效的 JSON 配置: 缺少必要字段");
+                        continue;
+                    }
+                    // 注册传送点配置
+                    int registered = RegisterTeleportPointConfig(
+                        sourceSceneId: jsonConfig.sourceSceneId,
+                        sourcePosition: jsonConfig.sourcePosition,
+                        targetSceneId: jsonConfig.targetSceneId,
+                        targetPosition: jsonConfig.targetPosition,
+                        interactName: jsonConfig.interactName,
+                        interactTime: jsonConfig.interactTime,
+                        backTeleport: jsonConfig.backTeleport,
+                        disposable: jsonConfig.disposable
+                    );
+
+                    successCount += registered;
+                }
+
+                Debug.Log($"{Constant.LogPrefix} 从 JSON 文件成功注册了 {successCount} 个传送点配置");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Constant.LogPrefix} 读取 JSON 配置文件时发生异常: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         /// <summary>
@@ -256,6 +317,7 @@ namespace Add_Custom_Teleport_Point
         /// </remarks>
         public static void Init()
         {
+            readConfigFromJson();
             MultiSceneCore.OnSubSceneLoaded += onSubSceneLoaded;
             SceneLoader.onAfterSceneInitialize += onAfterSceneInitialize;
         }

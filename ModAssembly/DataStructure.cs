@@ -80,16 +80,18 @@ namespace Add_Custom_Teleport_Point
     }
 
     // 包含了用户创建传送点需要提供的信息
+    [Serializable]
     public class TeleportConfig
     {
         public int configID = -1;
-        public string sourceSceneId;
-        public Vector3 sourcePosition;
-        public string targetSceneId;
-        public Vector3 targetPosition;
+        public string sourceSceneId = "";
+        public float[] sourcePosition = [0f,0f,0f];
+        public string targetSceneId = "";
+        public float[] targetPosition = [0f,0f,0f];
         public string interactName = Constant.DEFAULT_INTERACT_NAME;
         public float interactTime = Constant.DEFAULT_INTERACT_TIME;
         public bool disposable = false;
+        public bool backTeleport = false;
 
         /// <summary>
         /// 构造函数，创建传送点配置
@@ -102,8 +104,8 @@ namespace Add_Custom_Teleport_Point
         /// <param name="interactTime">交互时间</param>
         /// <param name="disposable">是否为一次性传送点</param>
         public TeleportConfig(
-            string sourceSceneId, Vector3 sourcePosition,
-            string targetSceneId, Vector3 targetPosition,
+            string sourceSceneId, float[] sourcePosition,
+            string targetSceneId, float[] targetPosition,
             string interactName = Constant.DEFAULT_INTERACT_NAME,
             float interactTime = Constant.DEFAULT_INTERACT_TIME,
             bool disposable = false

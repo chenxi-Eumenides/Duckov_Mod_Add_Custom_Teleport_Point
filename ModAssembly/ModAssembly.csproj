@@ -59,6 +59,9 @@
         <Copy SourceFiles="$(ProjectDir)/info.ini"
               DestinationFolder="$(OutputCopyDir)"
               SkipUnchangedFiles="true" />
+        <Copy SourceFiles="$(ProjectDir)/config.json"
+              DestinationFolder="$(OutputCopyDir)"
+              SkipUnchangedFiles="true" />
     </Target>
     <Target Name="CleanOutputFolder" BeforeTargets="Clean">
         <RemoveDir Directories="$(OutputCopyDir)" />
